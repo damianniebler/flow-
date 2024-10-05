@@ -1,0 +1,53 @@
+import { supabase } from '../supabase';
+import { writable } from 'svelte/store';
+
+export const user = writable(null);
+
+export async function signUp(email, password) {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+    });
+
+    if (authError) throw authError;
+
+    if (authData.user) {
+        const { error: insertError } = await supabase
+            .from('users')
+            .insert([
+                {
+                    id: authData.user.id,
+                    email: authData.user.email,
+                    password: null
+                }
+            ]);
+
+        if (insertError) throw insertError;
+    }
+
+    return authData;
+}
+
+export async function signIn(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    });
+
+    if (error) throw error;
+
+    user.set(data.user);
+    return data;
+}
+
+export async function signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    user.set(null);
+}
+
+export async function getCurrentUser() {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    user.set(currentUser);
+    return currentUser;
+}
