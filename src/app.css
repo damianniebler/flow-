@@ -350,11 +350,14 @@
 	background-color: #f0f0f0;
 	padding: 20px;
 	box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-  }
+	display: flex;
+	flex-direction: column;
+	z-index: 9999;
+  }  
   
   .note-sidebar textarea {
 	width: 100%;
-	flex-grow: 1;
+	height: calc(100% - 100px);
 	resize: none;
 	margin-bottom: 10px;
   }
@@ -467,3 +470,128 @@
   .hidden {
 	transform: translateX(-100%);
   }
+
+  .overlay {
+	display: flex;
+	position: fixed;
+	justify-content: center;
+	align-items: center;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	/*background-color: rgba(0, 0, 0, 0.7);*/
+	z-index: 9998;
+  }
+  
+  .hidden {
+	display: none;
+  }
+  
+  .highlight {
+	position: relative;
+	z-index: 10001;
+	box-shadow: 0 0 0 5px rgba(0, 123, 255, 0.5);
+	border-radius: 5px;
+  }
+  
+  
+  .tutorial-message {
+	position: fixed;
+	z-index: 10000;
+	background-color: white;
+	padding: 20px;
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  .note-sidebar-buttons {
+	margin-top: auto;
+  }
+
+  .entity-header {
+	display: flex;
+	align-items: center;
+	margin-bottom: 20px;
+  }
+  
+  .back-button {
+	margin-right: 15px;
+	padding: 5px 10px;
+	background-color: #f0f0f0;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 16px;
+  }
+  
+  .back-button:hover {
+	background-color: #e0e0e0;
+  }
+  
+  .tutorial-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center; /* Centers items horizontally */
+	justify-content: center; /* Centers items vertically */
+	background-color: white;
+	padding: 20px;
+	border-radius: 10px;
+	text-align: center;
+	max-width: 80%;
+	position: relative; /* Ensure no absolute/fixed positioning */
+  }
+  
+  .tutorial-message {
+	font-size: 18px;
+	margin-bottom: 20px;
+	position: relative; /* Remove any absolute/fixed positioning */
+  }
+  
+  .options-container {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 100%;
+  }
+  
+  .options-container button {
+	padding: 10px;
+	font-size: 16px;
+	cursor: pointer;
+  }
+
+  .tutorial-content.last-step {
+	margin-top: 100px; /* Adjust this value as needed */
+  }
+  
+  .confetti {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 10002;
+  }
+  
+  .confetti-piece {
+	position: absolute;
+	width: 10px;
+	height: 10px;
+	background-color: #ffd700;
+	top: -10px;
+	animation: confetti-fall 3s linear forwards;
+  }
+  
+  @keyframes confetti-fall {
+	0% {
+	  transform: translateY(0) rotate(0deg);
+	  opacity: 1;
+	}
+	100% {
+	  transform: translateY(100vh) rotate(360deg);
+	  opacity: 0;
+	}
+  }
+  

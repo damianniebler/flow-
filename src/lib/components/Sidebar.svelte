@@ -4,8 +4,9 @@
   import { user } from '$lib/auth';
   import { writable } from 'svelte/store';
   import { browser } from '$app/environment';
-  import { sidebarVisible } from '$lib/stores/sidebarStore';
+  import { sidebarVisible, newFolderId } from '$lib/stores/sidebarStore'; // Import newFolderId
   import '../../app.css';
+  import { tick } from 'svelte';
 
   let folders = [];
   let newFolderName = '';
@@ -60,24 +61,54 @@
     }
   }
 
+  function updateNewFolderName(value) {
+    newFolderName = value;
+  }
+
   async function createFolder() {
-    if (newFolderName.trim() && $user) {
-      const { data, error } = await supabase
-        .from('folders')
-        .insert({
-          name: newFolderName.trim(),
-          user_id: $user.id
-        })
-        .select();
+  console.log('createFolder function called');
+  if (newFolderName.trim() && $user) {
+    console.log('Attempting to create folder:', newFolderName);
+    const { data, error } = await supabase
+      .from('folders')
+      .insert({
+        name: newFolderName.trim(),
+        user_id: $user.id
+      })
+      .select();
 
       if (error) {
-        console.error('Error creating folder:', error);
-      } else {
-        folders = [...folders, data[0]];
-        newFolderName = '';
-      }
+    console.error('Error creating folder:', error);
+  } else {
+    console.log('Folder created successfully:', data[0]);
+    folders = [...folders, data[0]];
+    newFolderName = '';
+
+    // Update the newFolderId store
+    newFolderId.set(data[0].id);
+    await tick(); 
+    // IMPORTANT: Wait for the next microtask to ensure the DOM updates
+    Promise.resolve().then(() => {
+      newFolderId.set(null);
+      // Now signal that the DOM is updated
+      newFolderId.set(data[0].id);
+    });
     }
   }
+}
+
+
+
+$: if ($newFolderId) {
+  console.log('New folder ID detected in Sidebar.svelte:', $newFolderId);
+  if (window.tutorial && typeof window.tutorial.folderCreated === 'function') {
+    window.tutorial.folderCreated($newFolderId);
+  } else {
+    console.warn('window.tutorial or folderCreated method not available');
+  }
+  newFolderId.set(null);
+}
+
 
   async function renameFolder(folder) {
     const newName = prompt('Enter a new name for the folder:', folder.name);
@@ -114,7 +145,7 @@
 </script>
 
 <aside class:hidden={!$sidebarVisible}>
-  <h2>Folders</h2>
+  <h2 id="test">Folders</h2>
   {#if $user}
     <ul>
       {#each folders as folder}
@@ -127,11 +158,13 @@
     </ul>
     <form on:submit|preventDefault={createFolder}>
       <input
-        type="text"
-        bind:value={newFolderName}
-        placeholder="New folder name"
-      />
-      <button type="submit">Create Folder</button>
+      id="new-folder-input"
+      type="text"
+      bind:value={newFolderName}
+      placeholder="New folder name"
+    />
+    <button id="create-folder-button" type="submit">Create Folder</button>
+    
     </form>
     <div class="dark-mode-toggle">
       <label>

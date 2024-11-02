@@ -72,6 +72,7 @@
 onMount(() => {
   loadSections();
   loadAllFolders();
+  window.createSection = createSection;
 });
 
   function prepareSection(section) {
@@ -158,9 +159,13 @@ onMount(() => {
     }
   }
 
-  async function createSection() {
+  async function createSection(event) {
+  event.preventDefault();
+  console.log('Creating section, current newSectionName:', newSectionName);
+  
+  if (event.isTrusted || !window.tutorial) {
     if (newSectionName.trim()) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('sections')
         .insert({
           name: newSectionName.trim(),
@@ -172,36 +177,73 @@ onMount(() => {
       if (error) {
         console.error('Error creating section:', error);
       } else {
+        console.log('Section created successfully:', data[0]);
+        const currentInputValue = newSectionName;
         await loadSections();
-        newSectionName = '';
+        newSectionName = currentInputValue;
+        if (window.tutorial && typeof window.tutorial.sectionCreated === 'function') {
+          console.log('Calling tutorial.sectionCreated');
+          window.tutorial.sectionCreated(data[0].id);
+        }
       }
     }
   }
+}
 
-  function addEntityToSection(sectionId) {
-    const newEntityName = prompt('Enter new entity name:');
-    if (newEntityName && newEntityName.trim()) {
-      createEntity(sectionId, newEntityName.trim());
+
+
+
+
+
+
+
+function addEntityToSection(sectionId) {
+  let newEntityName = '';
+  
+  if (window.tutorial && window.tutorial.currentStep !== 4) {
+    if (window.tutorial.currentStepSet === window.tutorial.workSteps) {
+      newEntityName = "Joe's Bakery";
+    } else if (window.tutorial.currentStepSet === window.tutorial.schoolSteps) {
+      newEntityName = "Math Homework";
+    } else if (window.tutorial.currentStepSet === window.tutorial.holidaySteps) {
+      newEntityName = "Halloween";
+    } else if (window.tutorial.currentStepSet === window.tutorial.artSteps) {
+      newEntityName = "Landscape Painting";
     }
+  } else {
+    newEntityName = prompt('Enter new entity name:', newEntityName);
   }
 
-  async function createEntity(sectionId, entityName) {
-    const { error } = await supabase
-      .from('entities')
-      .insert({
-        name: entityName,
-        section_id: sectionId,
-        order: sections.find(s => s.id === sectionId).entities.length,
-        created_at: new Date().toISOString()
-      })
-      .select();
-
-    if (error) {
-      console.error('Error creating entity:', error);
-    } else {
-      await loadSections();
-    }
+  if (newEntityName && newEntityName.trim()) {
+    createEntity(sectionId, newEntityName.trim());
   }
+}
+
+
+
+
+async function createEntity(sectionId, entityName) {
+  const { data, error } = await supabase
+    .from('entities')
+    .insert({
+      name: entityName,
+      section_id: sectionId,
+      order: sections.find(s => s.id === sectionId).entities.length,
+      created_at: new Date().toISOString()
+    })
+    .select();
+
+  if (error) {
+    console.error('Error creating entity:', error);
+  } else {
+    await loadSections();
+    if (window.tutorial && typeof window.tutorial.entityCreated === 'function') {
+  setTimeout(() => window.tutorial.entityCreated(data[0].id), 100);
+}
+
+  }
+}
+
 
   async function moveEntityToSection(entity, targetSectionId) {
     if (targetSectionId) {
@@ -234,7 +276,8 @@ onMount(() => {
 
   async function moveEntityToFolder(entity, targetFolderId) {
   if (targetFolderId) {
-    const { data, error } = await supabase
+    // First, try to get an existing section
+    let { data: existingSection, error: sectionError } = await supabase
       .from('sections')
       .select('id')
       .eq('folder_id', targetFolderId)
@@ -242,13 +285,27 @@ onMount(() => {
       .limit(1)
       .single();
 
-    if (error) {
-      console.error('Error finding target section:', error);
-      return;
+    let targetSectionId;
+
+    if (sectionError) {
+      // If no section exists, create a new one
+      const { data: newSection, error: createError } = await supabase
+        .from('sections')
+        .insert({ name: 'Default Section', folder_id: targetFolderId, order: 0 })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Error creating new section:', createError);
+        return;
+      }
+
+      targetSectionId = newSection.id;
+    } else {
+      targetSectionId = existingSection.id;
     }
 
-    const targetSectionId = data.id;
-
+    // Now move the entity to the target section
     const { error: updateError } = await supabase
       .from('entities')
       .update({ section_id: targetSectionId })
@@ -261,6 +318,7 @@ onMount(() => {
     }
   }
 }
+
 
   async function renameSection(section) {
     const newName = prompt('Enter a new name for the section:', section.name);
@@ -367,7 +425,7 @@ onMount(() => {
         >
         {#each section.entities as entity (entity.uniqueId)}
         <li class="entity-item">
-          <a href="/entity/{entity.id}" class="entity-name">{entity.name}</a>
+          <a href="/entity/{entity.id}?folderId={currentFolderId}" class="entity-name">{entity.name}</a>
           <span class="entity-timestamp">Last updated: {formatRelativeTime(entity.last_updated)}</span>
           <div class="entity-actions">
             <button class="btn-icon" on:click={() => renameEntity(entity)}>✏️</button>
@@ -394,20 +452,23 @@ onMount(() => {
             </li>
           {/if}
         </ul>
-        <button class="add-entity-btn" on:click={() => addEntityToSection(section.id)}>
+        <button class="add-entity-btn" id="add-entity-btn" on:click={() => addEntityToSection(section.id)}>
           + Add new entity
         </button>
       </div>
     {/each}
   </div>
 
-  <form class="add-section-form" on:submit|preventDefault={createSection}>
-    <input
-      type="text"
-      bind:value={newSectionName}
-      placeholder="New section name"
-      class="input-new-section"
-    />
-    <button type="submit" class="btn-create-section">Create Section</button>
+  <form class="add-section-form" on:submit={createSection}>
+    <input 
+    type="text" 
+    bind:value={newSectionName} 
+    placeholder="New section name" 
+    class="input-new-section" 
+    id="new-section-input" 
+  />
+  
+    <button type="button" class="btn-create-section" on:click={createSection}>Create Section</button>
   </form>
+  
 </div>

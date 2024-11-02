@@ -1,5 +1,6 @@
 <script>
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { supabase } from '../../../supabase';
   import { onMount } from 'svelte';
   import '../../../app.css';
@@ -10,11 +11,26 @@
   let selectedItem = null;
   let showNoteSidebar = false;
 
+  $: folderId = $page.url.searchParams.get('folderId');
   $: entityId = $page.params.id;
   $: incompleteTasks = items.filter(item => !item.completed);
   $: completedTasks = items.filter(item => item.completed);
 
-  onMount(loadEntityAndItems);
+  onMount(() => {
+  loadEntityAndItems();
+  if (window.tutorial && window.tutorial.currentStep === 5) {
+    window.tutorial.currentStepSet[5].action();
+  }
+});
+
+
+
+
+  function goBackToFolder() {
+    if (folderId) {
+      goto(`/folder/${folderId}`);
+    }
+  }
 
   async function loadEntityAndItems() {
     const { data: entityData, error: entityError } = await supabase
@@ -45,23 +61,26 @@
   }
 
   async function createItem() {
-    if (newItemName.trim()) {
-      const { data, error } = await supabase
-        .from('items')
-        .insert({
-          entity_id: entityId,
-          name: newItemName.trim(),
-        })
-        .select();
+  if (newItemName.trim()) {
+    const { data, error } = await supabase
+      .from('items')
+      .insert({
+        entity_id: entityId,
+        name: newItemName.trim(),
+      })
+      .select();
 
-      if (error) {
-        console.error('Error creating item:', error);
-      } else {
-        items = [data[0], ...items];
-        newItemName = '';
+    if (error) {
+      console.error('Error creating item:', error);
+    } else {
+      items = [data[0], ...items];
+      newItemName = '';
+      if (window.tutorial && window.tutorial.currentStep === 5) {
+        window.tutorial.nextStep();
       }
     }
   }
+}
 
   async function renameItem(item) {
   const newName = prompt('Enter new name for the item:', item.name);
@@ -143,6 +162,13 @@
       items = items.filter(i => i.id !== item.id);
     }
   }
+  function handleAddItem() {
+  if (window.tutorial && window.tutorial.currentStep === 6) {
+    window.tutorial.nextStep();
+  }
+}
+
+
 
   function openNoteSidebar(item) {
     selectedItem = item;
@@ -150,17 +176,22 @@
   }
 
   async function updateItemNote() {
-    const { error } = await supabase
-      .from('items')
-      .update({ note: selectedItem.note, last_updated: new Date().toISOString() })
-      .eq('id', selectedItem.id);
+  const { error } = await supabase
+    .from('items')
+    .update({ note: selectedItem.note, last_updated: new Date().toISOString() })
+    .eq('id', selectedItem.id);
 
-    if (error) {
-      console.error('Error updating item note:', error);
-    } else {
-      items = [...items];
+  if (error) {
+    console.error('Error updating item note:', error);
+  } else {
+    items = [...items];
+    showNoteSidebar = false;
+    if (window.tutorial && window.tutorial.currentStep === 7) {
+      window.tutorial.nextStep();
     }
   }
+}
+
 
   function truncateNote(note) {
     return note ? (note.length > 90 ? note.slice(0, 90) + '...' : note) : '';
@@ -168,11 +199,16 @@
 </script>
 
 <div class="entity-page">
-  <h1>{entity ? entity.name : 'Loading...'}</h1>
+  <div class="entity-header">
+    <button class="back-button" on:click={goBackToFolder}>← Back</button>
+    <h1>{entity ? entity.name : 'Loading...'}</h1>
+  </div>
 
   <form on:submit|preventDefault={createItem}>
-    <input type="text" bind:value={newItemName} placeholder="New item name" />
-    <button type="submit">Add Item</button>
+    <input type="text" bind:value={newItemName} placeholder="New item name" id="new-item-input" />
+    <button type="submit" id="add-item-button" on:click={handleAddItem}>Add Item</button>
+
+
   </form>
 
   <h2>Incomplete Tasks</h2>
@@ -189,9 +225,15 @@
         </div>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div class="item-note" on:click={() => openNoteSidebar(item)}>
+        <div class="item-note" id="item-note" on:click={() => {
+          openNoteSidebar(item);
+          if (window.tutorial && window.tutorial.currentStep === 6) {
+            window.tutorial.nextStep();
+          }
+        }}>
           {item.note ? truncateNote(item.note) : 'Click to add a note'}
         </div>
+        
       </li>
     {/each}
   </ul>
@@ -217,13 +259,13 @@
   </ul>  
 
   {#if showNoteSidebar}
-    <div class="note-sidebar">
-      <h2>Edit Note</h2>
-      <textarea bind:value={selectedItem.note} on:keydown={handleKeydown}></textarea>
-      <div class="note-sidebar-buttons">
-        <button on:click={updateItemNote}>Save Note</button>
-        <button on:click={() => showNoteSidebar = false}>Close</button>
-      </div>
+  <div class="note-sidebar">
+    <h2>Edit Note</h2>
+    <textarea id="note-area" bind:value={selectedItem.note} on:keydown={handleKeydown}></textarea>
+    <div class="note-sidebar-buttons">
+      <button id="save-note" on:click={updateItemNote}>Save Note</button>
+      <button on:click={() => showNoteSidebar = false}>Close</button>
     </div>
+  </div>  
   {/if}
 </div>
