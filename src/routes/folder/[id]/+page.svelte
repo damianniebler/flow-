@@ -453,8 +453,9 @@ async function createEntity(sectionId, entityName) {
           {/if}
         </ul>
         <button class="add-entity-btn" id="add-entity-btn" on:click={() => addEntityToSection(section.id)}>
-          + Add new entity
+          Add New
         </button>
+        
       </div>
     {/each}
   </div>

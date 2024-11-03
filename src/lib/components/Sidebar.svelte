@@ -147,15 +147,16 @@ $: if ($newFolderId) {
 <aside class:hidden={!$sidebarVisible}>
   <h2 id="test">Folders</h2>
   {#if $user}
-    <ul>
-      {#each folders as folder}
-        <li>
-          <a href="/folder/{folder.id}">{folder.name}</a>
-          <button on:click={() => renameFolder(folder)}>Rename</button>
-          <button on:click={() => deleteFolder(folder)}>Delete</button>
-        </li>
-      {/each}
-    </ul>
+  <ul>
+    {#each folders as folder}
+      <li>
+        <a href="/folder/{folder.id}">{folder.name}</a>
+        <button class="btn-icon" on:click={() => renameFolder(folder)}>✏️</button>
+        <button class="btn-icon" on:click={() => deleteFolder(folder)}>🗑️</button>
+      </li>
+    {/each}
+  </ul>
+  
     <form on:submit|preventDefault={createFolder}>
       <input
       id="new-folder-input"
@@ -166,12 +167,14 @@ $: if ($newFolderId) {
     <button id="create-folder-button" type="submit">Create Folder</button>
     
     </form>
-    <div class="dark-mode-toggle">
-      <label>
-        Dark Mode
-        <input type="checkbox" checked={$darkMode} on:change={toggleDarkMode}>
-      </label>
+<div class="dark-mode-toggle">
+  <button class="toggle-switch" on:click={toggleDarkMode} aria-label="Toggle dark mode">
+    <div class="toggle-slider" class:active={$darkMode}>
+      <span class="toggle-icon">{$darkMode ? '🌙' : '☀️'}</span>
     </div>
+  </button>
+</div>
+
   {:else}
     <p>Please log in to view your folders.</p>
   {/if}

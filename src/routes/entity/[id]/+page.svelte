@@ -220,8 +220,9 @@
           <span class="item-name">{item.name}</span>
           <span class="last-updated">Last updated: {formatRelativeTime(item.last_updated)}</span>
           <button on:click={() => updateTimestamp(item)} class="update-timestamp-btn">🕒</button>
-          <button on:click={() => renameItem(item)}>Rename</button>
-          <button on:click={() => deleteItem(item)}>Delete</button>
+          <button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
+          <button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
+          
         </div>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -246,8 +247,8 @@
           <button on:click={() => toggleItemCompletion(item)} class="uncomplete-btn">↩</button>
           <span class="item-name">{item.name}</span>
           <span class="last-updated">Last updated: {formatRelativeTime(item.last_updated)}</span>
-          <button on:click={() => renameItem(item)}>Rename</button>
-          <button on:click={() => deleteItem(item)}>Delete</button>
+          <button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
+          <button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
         </div>
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <!-- svelte-ignore a11y-click-events-have-key-events -->
