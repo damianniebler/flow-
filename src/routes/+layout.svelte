@@ -18,7 +18,7 @@
 <div class="app">
   <Header />
   <div class="content">
-    {#if $sidebarVisible}
+    {#if $user && $sidebarVisible}
       <Sidebar />
     {/if}
     <main>

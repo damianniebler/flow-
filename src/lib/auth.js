@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import { writable } from 'svelte/store';
+import { goto } from '$app/navigation';
 
 export const user = writable(null);
 
@@ -44,7 +45,9 @@ export async function signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     user.set(null);
+    goto('/login');
 }
+
 
 export async function getCurrentUser() {
     const { data: { user: currentUser } } = await supabase.auth.getUser();

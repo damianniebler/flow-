@@ -560,3 +560,31 @@
 	  opacity: 0;
 	}
   }
+
+  aside li a {
+	position: relative;
+	padding-left: 0;
+	transition: padding-left 0.3s ease;
+  }
+  
+  aside li a::before {
+	content: "⮞";
+	font-size: 1.25em;
+	color: var(--button-hover-bg);
+	position: absolute;
+	left: -20px;
+	top: 50%;
+	transform: translateY(-50%);
+	opacity: 0;
+	transition: all 0.3s ease;
+  }
+  
+  
+  aside li a:hover {
+	padding-left: 11px;
+  }
+  
+  aside li a:hover::before {
+	opacity: 1;
+	left: -10px;
+  }

@@ -57,9 +57,11 @@
   }
 
   async function loadAllFolders() {
+  const { data: userData } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from('folders')
     .select('id, name')
+    .eq('user_id', userData.user.id)
     .order('name');
 
   if (error) {
@@ -68,6 +70,7 @@
     allFolders = data;
   }
 }
+
 
 onMount(() => {
   loadSections();
@@ -443,7 +446,7 @@ async function createEntity(sectionId, entityName) {
             </select>
             <button class="btn-icon" on:click={() => deleteEntity(entity)}>🗑️</button>
           </div>
-        </li>        
+        </li>
            
       {/each}
           {#if section.entities.length === 0}
