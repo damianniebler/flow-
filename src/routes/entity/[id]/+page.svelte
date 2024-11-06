@@ -216,10 +216,15 @@
     {#each incompleteTasks as item (item.id)}
       <li class="item">
         <div class="item-content">
-          <button on:click={() => toggleItemCompletion(item)} class="complete-btn">✓</button>
+          <button on:click={() => toggleItemCompletion(item)} class="complete-btn">
+            <i class="fas fa-check"></i>
+          </button>
+          
           <span class="item-name">{item.name}</span>
           <span class="last-updated">Last updated: {formatRelativeTime(item.last_updated)}</span>
-          <button on:click={() => updateTimestamp(item)} class="update-timestamp-btn">🕒</button>
+          <button on:click={() => updateTimestamp(item)} class="update-timestamp-btn">
+            <i class="fas fa-sync-alt"></i>
+          </button>          
           <button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
           <button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
           
@@ -244,7 +249,10 @@
     {#each completedTasks as item (item.id)}
       <li class="item completed">
         <div class="item-content">
-          <button on:click={() => toggleItemCompletion(item)} class="uncomplete-btn">↩</button>
+          <button on:click={() => toggleItemCompletion(item)} class="uncomplete-btn">
+            <i class="fas fa-check"></i>
+          </button>
+          
           <span class="item-name">{item.name}</span>
           <span class="last-updated">Last updated: {formatRelativeTime(item.last_updated)}</span>
           <button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>

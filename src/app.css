@@ -303,9 +303,42 @@
   }
   
   .complete-btn, .uncomplete-btn {
-	margin-right: 10px;
+	background: none;
+	border: 2px solid #22c55e;
+	border-radius: 50%;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	cursor: pointer;
+	color: #22c55e;
+	transition: all 0.2s ease;
   }
+  
+  .complete-btn i {
+	opacity: 0;
+  }
+  
+  .uncomplete-btn i, .complete-btn i {
+	transition: opacity 0.2s ease;
+  }
+  
+  .complete-btn:hover i {
+	opacity: 1;
+  }
+  
+  .uncomplete-btn:hover i {
+	opacity: 0;
+  }
+  
+  .complete-btn:hover {
+	transform: scale(1.05);
+  }
+  
+  .uncomplete-btn:hover {
+	transform: scale(.95);
+  }  
   
   .update-timestamp-btn {
 	margin-left: 10px;
@@ -313,6 +346,15 @@
 	background: none;
 	border: none;
 	font-size: 16px;
+	color: var(--button-hover-bg);
+  }
+
+  .update-timestamp-btn i {
+	transition: transform 0.3s ease;
+  }
+  
+  .update-timestamp-btn:hover i {
+	transform: rotate(180deg);
   }
 
 .dark-mode-toggle {
@@ -587,4 +629,11 @@
   aside li a:hover::before {
 	opacity: 1;
 	left: -10px;
+  }
+
+  .item-content {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
   }
