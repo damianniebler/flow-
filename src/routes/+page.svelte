@@ -1,5 +1,5 @@
 <script>
-  import { user } from '$lib/auth';
+  import { user, getCurrentUser } from '$lib/auth';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { supabase } from '../supabase';
@@ -7,19 +7,18 @@
   let firstName = '';
 
   onMount(async () => {
-      if ($user) {
-          const { data } = await supabase
-              .from('users')
-              .select('first_name')
-              .eq('id', $user.id)
-              .single();
-          firstName = data.first_name;
-      }
+    const currentUser = await getCurrentUser();
+    if (currentUser) {
+      const { data } = await supabase
+        .from('users')
+        .select('first_name')
+        .eq('id', currentUser.id)
+        .single();
+      firstName = data.first_name;
+    } else {
+      goto('/login');
+    }
   });
-
-  $: if ($user) {
-      goto('/');
-  }
 </script>
 
 <h1>Welcome {firstName}!</h1>
