@@ -4,7 +4,7 @@ import { goto } from '$app/navigation';
 
 export const user = writable(null);
 
-export async function signUp(email, password) {
+export async function signUp(email, password, firstName) {
     const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -19,6 +19,7 @@ export async function signUp(email, password) {
                 {
                     id: authData.user.id,
                     email: authData.user.email,
+                    first_name: firstName,
                     password: null
                 }
             ]);

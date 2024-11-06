@@ -5,11 +5,12 @@
 
     let email = '';
     let password = '';
+    let firstName = '';
     let error = null;
 
     async function handleSubmit() {
         try {
-            await signUp(email, password);
+            await signUp(email, password, firstName);
             goto('/login');
         } catch (e) {
             error = e.message;
@@ -20,6 +21,10 @@
 <h1>Sign Up</h1>
 
 <form on:submit|preventDefault={handleSubmit}>
+    <div>
+        <label for="firstName">First Name</label>
+        <input type="text" id="firstName" bind:value={firstName} required />
+    </div>
     <div>
         <label for="email">Email</label>
         <input type="email" id="email" bind:value={email} required />
