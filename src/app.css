@@ -29,7 +29,6 @@
   }
   
   header {
-	background-color: var(--sidebar-bg);
 	display: flex;
 	width: 100%;
 	padding: 1rem;
@@ -621,7 +620,6 @@
 	transition: all 0.3s ease;
   }
   
-  
   aside li a:hover {
 	padding-left: 11px;
   }
@@ -636,4 +634,31 @@
 	align-items: center;
 	gap: 10px;
 	width: 100%;
+  }
+
+  .note-link {
+    color: var(--button-hover-bg);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  .options-popup {
+    position: absolute;
+    background: var(--section-bg);
+    border-radius: 4px;
+    padding: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+  }
+  
+  .options-popup button {
+	color: var(--text-color);
+    display: block;
+    width: 100%;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
   }

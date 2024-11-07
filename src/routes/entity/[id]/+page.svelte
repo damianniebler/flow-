@@ -4,6 +4,7 @@
   import { supabase } from '../../../supabase';
   import { onMount } from 'svelte';
   import '../../../app.css';
+  import LinkOptionsPopup from '$lib/components/LinkOptionsPopup.svelte';
 
   let entity = null;
   let items = [];
@@ -21,10 +22,12 @@
   if (window.tutorial && window.tutorial.currentStep === 5) {
     window.tutorial.currentStepSet[5].action();
   }
+  window.addEventListener('click', (e) => {
+    if (showPopup && !e.target.closest('.options-popup') && !e.target.closest('.note-link')) {
+      showPopup = false;
+    }
+  });
 });
-
-
-
 
   function goBackToFolder() {
     if (folderId) {
@@ -168,23 +171,29 @@
   }
 }
 
-
-
   function openNoteSidebar(item) {
     selectedItem = item;
     showNoteSidebar = true;
   }
 
   async function updateItemNote() {
+  const newTimestamp = new Date().toISOString();
   const { error } = await supabase
     .from('items')
-    .update({ note: selectedItem.note, last_updated: new Date().toISOString() })
+    .update({ 
+      note: selectedItem.note, 
+      last_updated: newTimestamp 
+    })
     .eq('id', selectedItem.id);
 
   if (error) {
     console.error('Error updating item note:', error);
   } else {
-    items = [...items];
+    items = items.map(i => 
+      i.id === selectedItem.id 
+        ? {...i, note: selectedItem.note, last_updated: newTimestamp} 
+        : i
+    );
     showNoteSidebar = false;
     if (window.tutorial && window.tutorial.currentStep === 7) {
       window.tutorial.nextStep();
@@ -192,10 +201,59 @@
   }
 }
 
-
   function truncateNote(note) {
     return note ? (note.length > 90 ? note.slice(0, 90) + '...' : note) : '';
   }
+
+  function parseNoteWithLinks(note) {
+  if (!note) return { text: '', hasLinks: false };
+
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const matches = note.matchAll(urlRegex);
+  const links = Array.from(matches, m => m[0]);
+  const hasLinks = links.length > 0;
+
+  if (!hasLinks) return { text: note, hasLinks: false };
+
+  let parts = [];
+  let lastIndex = 0;
+  for (const match of note.matchAll(urlRegex)) {
+    parts.push(note.substring(lastIndex, match.index));
+    parts.push(match[0]);
+    lastIndex = match.index + match[0].length;
+  }
+  parts.push(note.substring(lastIndex));
+
+  return {
+    parts: parts,
+    links: links,
+    hasLinks: true
+  };
+}
+
+let showPopup = false;
+let popupItem = null;
+let popupPosition = { top: 0, left: 0 };
+let popupLink = '';
+
+function showOptionsPopup(item, rect) {
+  popupItem = item;
+  popupLink = parseNoteWithLinks(item.note).links[0];
+  popupPosition = {
+    top: rect.bottom + window.scrollY + 5,
+    left: rect.left + window.scrollX
+  };
+  showPopup = true;
+}
+
+function handleOptionClick(action) {
+  if (action === 'open') {
+    window.open(popupLink, '_blank');
+  } else if (action === 'edit') {
+    openNoteSidebar(popupItem);
+  }
+  showPopup = false;
+}
 </script>
 
 <div class="entity-page">
@@ -207,8 +265,6 @@
   <form on:submit|preventDefault={createItem}>
     <input type="text" bind:value={newItemName} placeholder="New item name" id="new-item-input" />
     <button type="submit" id="add-item-button" on:click={handleAddItem}>Add Item</button>
-
-
   </form>
 
   <h2>Incomplete Tasks</h2>
@@ -231,15 +287,33 @@
         </div>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div class="item-note" id="item-note" on:click={() => {
-          openNoteSidebar(item);
-          if (window.tutorial && window.tutorial.currentStep === 6) {
-            window.tutorial.nextStep();
+        <div class="item-note" on:click={(e) => {
+          const clickedLink = e.target.closest('a');
+          if (clickedLink) {
+            e.preventDefault();
+            const rect = clickedLink.getBoundingClientRect();
+            showOptionsPopup(item, rect);
+          } else {
+            openNoteSidebar(item);
           }
         }}>
-          {item.note ? truncateNote(item.note) : 'Click to add a note'}
+{#if item.note}
+  {@const parsed = parseNoteWithLinks(item.note)}
+  {#if parsed.hasLinks}
+    {#each parsed.parts as part}
+      {#if parsed.links.includes(part)}
+        <a href={part} class="note-link">{part}</a>
+      {:else}
+        <span>{truncateNote(part)}</span>
+      {/if}
+    {/each}
+  {:else}
+    {truncateNote(item.note)}
+  {/if}
+{:else}
+  Click to add a note
+{/if}
         </div>
-        
       </li>
     {/each}
   </ul>
@@ -260,8 +334,32 @@
         </div>
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div class="item-note" on:click={() => openNoteSidebar(item)}>
-          {item.note ? truncateNote(item.note) : 'Click to add a note'}
+        <div class="item-note" on:click={(e) => {
+          const clickedLink = e.target.closest('a');
+          if (clickedLink) {
+            e.preventDefault();
+            const rect = clickedLink.getBoundingClientRect();
+            showOptionsPopup(item, rect);
+          } else {
+            openNoteSidebar(item);
+          }
+        }}>
+{#if item.note}
+  {@const parsed = parseNoteWithLinks(item.note)}
+  {#if parsed.hasLinks}
+    {#each parsed.parts as part}
+      {#if parsed.links.includes(part)}
+        <a href={part} class="note-link">{part}</a>
+      {:else}
+        <span>{truncateNote(part)}</span>
+      {/if}
+    {/each}
+  {:else}
+    {truncateNote(item.note)}
+  {/if}
+{:else}
+  Click to add a note
+{/if}
         </div>
       </li>
     {/each}
@@ -278,3 +376,11 @@
   </div>  
   {/if}
 </div>
+
+{#if showPopup}
+  <LinkOptionsPopup 
+    position={popupPosition}
+    link={popupLink}
+    onOptionClick={handleOptionClick}
+  />
+{/if}

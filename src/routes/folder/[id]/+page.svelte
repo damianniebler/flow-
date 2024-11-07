@@ -99,8 +99,7 @@ onMount(() => {
       const { error } = await supabase
         .from('entities')
         .update({
-          name: newName.trim(),
-          last_updated: new Date().toISOString()
+          name: newName.trim()
         })
         .eq('id', entity.id);
 
@@ -110,7 +109,7 @@ onMount(() => {
         await loadSections();
       }
     }
-  }
+}
 
   function handleEntityDnd(e, targetSectionId) {
     const newEntities = e.detail.items.filter(item => !item.id.startsWith('dnd-'));
@@ -389,10 +388,11 @@ async function createEntity(sectionId, entityName) {
       }
     }
   }
+
 </script>
 
 <div class="folder-view">
-  <h1 class="folder-title">Folder: {folderName}</h1>
+  <h1 class="folder-title">{folderName}</h1>
 
   <div class="move-all-entities">
     <select bind:value={selectedSectionId}>
