@@ -31,7 +31,7 @@
   header {
 	display: flex;
 	width: 100%;
-	padding: 1rem 0 1rem 2rem;
+	padding: 10px 0 0 2rem;
 	a {
 		color: var(--text-color);
 		text-decoration: none;
@@ -462,6 +462,10 @@
 	padding: 5px;
 	margin-bottom: 10px;
   }
+
+  input[type="password"] {
+	margin-bottom: 10px;
+  }
   
   .createpop textarea {
 	height: 100px;
@@ -779,3 +783,28 @@
 	  rgba(255, 255, 255, 0) 100%
 	);
   }
+
+  .logo{
+	text-align: center;
+	letter-spacing: .5rem;
+	font-size: 1.75rem;
+  }
+
+  .login-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+  }  
+
+  .auth-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.separator {
+    color: var(--button-bg);
+}

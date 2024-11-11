@@ -17,8 +17,13 @@
         }
     }
 </script>
-
-<h1>Sign Up</h1>
+<div class="login-container">
+    <div class="logo">Flow</div>
+    <div class="auth-links">
+    <a href="/login">Login</a>
+    <span class="separator">|</span>
+    <b>Sign Up</b>
+    </div>
 
 <form on:submit|preventDefault={handleSubmit}>
     <div>
@@ -33,9 +38,10 @@
         <label for="password">Password</label>
         <input type="password" id="password" bind:value={password} required />
     </div>
-    <button type="submit">Sign Up</button>
+    <button class="button" type="submit">Sign Up</button>
 </form>
 
 {#if error}
     <p class="error">{error}</p>
 {/if}
+</div>

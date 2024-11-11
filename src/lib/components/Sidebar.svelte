@@ -8,6 +8,7 @@
   import '../../app.css';
   import { tick } from 'svelte';
 
+  let isLoading = true;
   let folders = [];
   let newFolderName = '';
   const darkMode = writable(false);
@@ -40,22 +41,33 @@
   });
 
   async function loadFolders() {
-    if ($user) {
-      const { data, error } = await supabase
-        .from('folders')
-        .select('*')
-        .eq('user_id', $user.id)
-        .order('created_at');
-     
-      if (error) {
-        console.error('Error loading folders:', error);
-      } else {
-        folders = data;
-      }
-    } else {
-      folders = [];
+  isLoading = true;
+  try {
+    const [responses] = await Promise.all([
+      Promise.all([
+        supabase
+          .from('folders')
+          .select('*')
+          .eq('user_id', $user.id)
+          .order('created_at')
+      ]),
+      new Promise(resolve => setTimeout(resolve, 500))
+    ]);
+
+    const [foldersData] = responses;
+
+    if (foldersData.error) {
+      console.error('Error loading folders:', foldersData.error);
+      return;
     }
+
+    folders = foldersData.data;
+  } catch (error) {
+    console.error('Error loading folder data:', error);
+  } finally {
+    isLoading = false;
   }
+}
 
   function updateNewFolderName(value) {
     newFolderName = value;
@@ -141,37 +153,52 @@ $: if ($newFolderId) {
 </script>
 
 <aside class:hidden={!$sidebarVisible}>
-  <h2 id="test">Folders</h2>
-  {#if $user}
-  <ul>
-    {#each folders as folder}
-      <li>
-        <a href="/folder/{folder.id}">{folder.name}</a>
-        <button class="btn-icon" on:click={() => renameFolder(folder)}>✏️</button>
-        <button class="btn-icon" on:click={() => deleteFolder(folder)}>🗑️</button>
-      </li>
-    {/each}
-  </ul>
-  
-    <form on:submit|preventDefault={createFolder}>
-      <input
-      id="new-folder-input"
-      type="text"
-      bind:value={newFolderName}
-      placeholder="New folder name"
-    />
-    <button id="create-folder-button" class="button" type="submit">Create Folder</button>
-    
-    </form>
-<div class="dark-mode-toggle">
-  <button class="toggle-switch" on:click={toggleDarkMode} aria-label="Toggle dark mode">
-    <div class="toggle-slider" class:active={$darkMode}>
-      <span class="toggle-icon">{$darkMode ? '🌙' : '☀️'}</span>
+  <div class="logo">Flow</div>
+  {#if isLoading && (!browser || !window.tutorial || !window.tutorial.currentStep)}
+    <div class="skeleton">
+      <div class="skeleton-header"></div>
+      <div class="skeleton-section">
+        <div class="skeleton-entity"></div>
+        <div class="skeleton-entity"></div>
+        <div class="skeleton-entity"></div>
+      </div>
+      <div class="skeleton-section">
+        <div class="skeleton-entity"></div>
+        <div class="skeleton-entity"></div>
+      </div>
     </div>
-  </button>
-</div>
-
   {:else}
-    <p>Please log in to view your folders.</p>
+    <h2 id="test">Folders</h2>
+    {#if $user}
+      <ul>
+        {#each folders as folder}
+          <li>
+            <a href="/folder/{folder.id}">{folder.name}</a>
+            <button class="btn-icon" on:click={() => renameFolder(folder)}>✏️</button>
+            <button class="btn-icon" on:click={() => deleteFolder(folder)}>🗑️</button>
+          </li>
+        {/each}
+      </ul>
+
+      <form on:submit|preventDefault={createFolder}>
+        <input
+          id="new-folder-input"
+          type="text"
+          bind:value={newFolderName}
+          placeholder="New folder name"
+        />
+        <button id="create-folder-button" class="button" type="submit">Create Folder</button>
+      </form>
+
+      <div class="dark-mode-toggle">
+        <button class="toggle-switch" on:click={toggleDarkMode} aria-label="Toggle dark mode">
+          <div class="toggle-slider" class:active={$darkMode}>
+            <span class="toggle-icon">{$darkMode ? '🌙' : '☀️'}</span>
+          </div>
+        </button>
+      </div>
+    {:else}
+      <p>Please log in to view your folders.</p>
+    {/if}
   {/if}
 </aside>
