@@ -401,7 +401,7 @@ async function createEntity(sectionId, entityName) {
         <option value={section.id}>{section.name}</option>
       {/each}
     </select>
-    <button on:click={moveAllEntities}>Move all entities</button>
+    <button class="button" on:click={moveAllEntities}>Move all entities</button>
   </div>
 
   <div class="sections-container"
@@ -472,7 +472,7 @@ async function createEntity(sectionId, entityName) {
     id="new-section-input" 
   />
   
-    <button type="button" class="btn-create-section" on:click={createSection}>Create Section</button>
+    <button type="button" id="btn-create-section" class="button" on:click={createSection}>Create Section</button>
   </form>
   
 </div>

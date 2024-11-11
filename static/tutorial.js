@@ -430,7 +430,7 @@ sectionCreated(sectionId) {
     if (this.currentStep === 2) {
       const setupSectionCreation = () => {
         const input = document.getElementById('new-section-input');
-        const createSectionButton = document.querySelector('.btn-create-section');
+        const createSectionButton = document.querySelector('#btn-create-section');
     
         if (input && createSectionButton) {
           console.log('Setting up section creation, initial sectionsCreated:', this.sectionsCreated);
@@ -483,7 +483,7 @@ sectionCreated(sectionId) {
           console.log('Input or create section button not found, setting up observer');
           const observer = new MutationObserver((mutations, obs) => {
             const input = document.getElementById('new-section-input');
-            const createSectionButton = document.querySelector('.btn-create-section');
+            const createSectionButton = document.querySelector('#btn-create-section');
             if (input && createSectionButton) {
               console.log('Input and create section button found by observer');
               obs.disconnect();

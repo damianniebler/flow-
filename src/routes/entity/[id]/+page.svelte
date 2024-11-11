@@ -189,11 +189,12 @@
   if (error) {
     console.error('Error updating item note:', error);
   } else {
-    items = items.map(i => 
-      i.id === selectedItem.id 
+    items = items
+      .map(i => i.id === selectedItem.id 
         ? {...i, note: selectedItem.note, last_updated: newTimestamp} 
-        : i
-    );
+        : i)
+      .sort((a, b) => new Date(a.last_updated) - new Date(b.last_updated));
+    
     showNoteSidebar = false;
     if (window.tutorial && window.tutorial.currentStep === 7) {
       window.tutorial.nextStep();
@@ -258,13 +259,13 @@ function handleOptionClick(action) {
 
 <div class="entity-page">
   <div class="entity-header">
-    <button class="back-button" on:click={goBackToFolder}>← Back</button>
+    <button class="back-button" on:click={goBackToFolder}>🠈</button>
     <h1>{entity ? entity.name : 'Loading...'}</h1>
   </div>
 
   <form on:submit|preventDefault={createItem}>
     <input type="text" bind:value={newItemName} placeholder="New item name" id="new-item-input" />
-    <button type="submit" id="add-item-button" on:click={handleAddItem}>Add Item</button>
+    <button type="submit" class="button" id="add-item-button" on:click={handleAddItem}>Add Item</button>
   </form>
 
   <h2>Incomplete Tasks</h2>
@@ -367,11 +368,11 @@ function handleOptionClick(action) {
 
   {#if showNoteSidebar}
   <div class="note-sidebar">
-    <h2>Edit Note</h2>
+    <h2>Note</h2>
     <textarea id="note-area" bind:value={selectedItem.note} on:keydown={handleKeydown}></textarea>
     <div class="note-sidebar-buttons">
-      <button id="save-note" on:click={updateItemNote}>Save Note</button>
-      <button on:click={() => showNoteSidebar = false}>Close</button>
+      <button id="save-note" class="button" on:click={updateItemNote}>Save Note</button>
+      <button class="second-button" on:click={() => showNoteSidebar = false}>Close</button>
     </div>
   </div>  
   {/if}

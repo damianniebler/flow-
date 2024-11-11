@@ -31,7 +31,7 @@
   header {
 	display: flex;
 	width: 100%;
-	padding: 1rem;
+	padding: 1rem 0 1rem 2rem;
 	a {
 		color: var(--text-color);
 		text-decoration: none;
@@ -205,9 +205,9 @@
 	gap: 10px;
   }
   
-  .btn-create-section {
+  .button {
 	padding: 8px 16px;
-	background-color: #007bff;
+	background-color: var(--button-bg);
 	color: white;
 	border: none;
 	border-radius: 4px;
@@ -215,8 +215,18 @@
 	font-size: 14px;
   }
   
-  .btn-create-section:hover {
-	background-color: #0056b3;
+  .button:hover {
+	background-color: var(--button-hover-bg);
+  }
+
+  .second-button{
+	padding: 8px 16px;
+	background-color: transparent;
+	border: 2px solid var(--button-bg);
+	color: white;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 14px;
   }
   
   .entity-timestamp {
@@ -231,6 +241,7 @@
   
   .move-all-entities select {
 	margin-right: 10px;
+	padding: 6px;
   }
   
   .notepad {
@@ -461,20 +472,6 @@
 	display: flex;
 	justify-content: space-between;
   }
-
-  .toggle-sidebar {
-	position: fixed;
-	top: 20px;
-	left: 10px;
-	z-index: 1000;
-	background: none;
-	border: none;
-	font-size: 24px;
-	cursor: pointer;
-	padding: 5px;
-	background-color: rgba(240, 240, 240, 0.7);
-	border-radius: 5px;
-  }
   
   .hidden {
 	transform: translateX(-100%);
@@ -523,17 +520,16 @@
   }
   
   .back-button {
-	margin-right: 15px;
-	padding: 5px 10px;
-	background-color: #f0f0f0;
+	margin-right: 15px;	
+	background: transparent;
 	border: none;
-	border-radius: 5px;
 	cursor: pointer;
-	font-size: 16px;
+	font-size: 2rem;
+	color: var(--button-bg);
   }
   
   .back-button:hover {
-	background-color: #e0e0e0;
+	color: var(--button-hover-bg);
   }
   
   .tutorial-content {
@@ -662,3 +658,40 @@
     cursor: pointer;
     text-align: left;
   }
+
+  .sidebar-toggle {
+	background: none;
+	border: none;
+	color: var(--button-bg);
+	font-size: 1.5rem;
+	cursor: pointer;
+	padding: 0.5rem;
+	transition: transform 0.3s ease;
+  }
+  
+  .sidebar-toggle:hover {
+	color: var(--button-hover-bg);
+	transform: scale(1.1);
+  }
+
+  .sticky-toggle {
+	position: fixed;
+	top: 1rem;
+	left: 1rem;
+	z-index: 1000;
+}
+
+.sidebar-toggle {
+	background: none;
+	border: none;
+	color: var(--button-bg);
+	font-size: 1.2rem;
+	cursor: pointer;
+	padding: 0.5rem;
+	transition: transform 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+	color: var(--button-hover-bg);
+	transform: scale(1.1);
+}

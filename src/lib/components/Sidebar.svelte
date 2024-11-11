@@ -15,10 +15,6 @@
   $: if ($user) {
     loadFolders();
   }
-
-  function toggleSidebar() {
-    sidebarVisible.update(v => !v);
-  }
   
   function toggleDarkMode() {
     darkMode.update(value => !value);
@@ -164,7 +160,7 @@ $: if ($newFolderId) {
       bind:value={newFolderName}
       placeholder="New folder name"
     />
-    <button id="create-folder-button" type="submit">Create Folder</button>
+    <button id="create-folder-button" class="button" type="submit">Create Folder</button>
     
     </form>
 <div class="dark-mode-toggle">
@@ -179,6 +175,3 @@ $: if ($newFolderId) {
     <p>Please log in to view your folders.</p>
   {/if}
 </aside>
-<button class="toggle-sidebar" on:click={toggleSidebar}>
-  {$sidebarVisible ? '◀' : '▶'}
-</button>
