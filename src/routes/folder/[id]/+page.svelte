@@ -5,6 +5,7 @@
   import { dndzone } from 'svelte-dnd-action';
   import lodash from 'lodash';
   import '../../../app.css';
+  import { browser } from '$app/environment';
 
   const { debounce } = lodash;
 
@@ -14,6 +15,7 @@
   let selectedSectionId = '';
   let folderName = '';
   let allFolders = [];
+  let isLoading = true;
 
   let pendingUpdates = Promise.resolve();
 
@@ -26,8 +28,10 @@
   onMount(loadSections);
 
   async function loadSections() {
-    try {
-      const [folderResponse, sectionsResponse] = await Promise.all([
+  isLoading = true;
+  try {
+    const [responses] = await Promise.all([
+      Promise.all([
         supabase
           .from('folders')
           .select('name')
@@ -44,17 +48,23 @@
           `)
           .eq('folder_id', currentFolderId)
           .order('order', { ascending: true })
-      ]);
+      ]),
+      new Promise(resolve => setTimeout(resolve, 500))
+    ]);
 
-      if (folderResponse.error) throw folderResponse.error;
-      if (sectionsResponse.error) throw sectionsResponse.error;
+    const [folderResponse, sectionsResponse] = responses;
 
-      folderName = folderResponse.data.name;
-      sections = sectionsResponse.data.map(prepareSection);
-    } catch (error) {
-      console.error('Error loading folder data:', error.message);
-    }
+    if (folderResponse.error) throw folderResponse.error;
+    if (sectionsResponse.error) throw sectionsResponse.error;
+
+    folderName = folderResponse.data.name;
+    sections = sectionsResponse.data.map(prepareSection);
+  } catch (error) {
+    console.error('Error loading folder data:', error.message);
+  } finally {
+    isLoading = false;
   }
+}
 
   async function loadAllFolders() {
   const { data: userData } = await supabase.auth.getUser();
@@ -390,8 +400,29 @@ async function createEntity(sectionId, entityName) {
   }
 
 </script>
-
-<div class="folder-view">
+{#if isLoading && (!browser || !window.tutorial || !window.tutorial.currentStep)}
+  <div class="folder-view skeleton">
+    <div class="skeleton-header"></div>
+    <div class="skeleton-sections">
+      <div class="skeleton-section">
+        <div class="skeleton-section-header"></div>
+        <div class="skeleton-entities">
+          <div class="skeleton-entity"></div>
+          <div class="skeleton-entity"></div>
+          <div class="skeleton-entity"></div>
+        </div>
+      </div>
+      <div class="skeleton-section">
+        <div class="skeleton-section-header"></div>
+        <div class="skeleton-entities">
+          <div class="skeleton-entity"></div>
+          <div class="skeleton-entity"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+{:else}
+  <div class="folder-view">
   <h1 class="folder-title">{folderName}</h1>
 
   <div class="move-all-entities">
@@ -476,3 +507,4 @@ async function createEntity(sectionId, entityName) {
   </form>
   
 </div>
+{/if}

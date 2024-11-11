@@ -517,14 +517,14 @@ sectionCreated(sectionId) {
       }
     } else if (this.currentStep === 6) {
       const highlightItemNote = () => {
-        const itemNote = document.getElementById('item-note');
+        const itemNote = document.querySelector('.item-note');
         if (itemNote) {
           itemNote.classList.add('highlight');
           console.log('Highlighted item note');
         } else {
           console.log('Item note element not found, setting up observer');
           const observer = new MutationObserver((mutations, obs) => {
-            const itemNote = document.getElementById('item-note');
+            const itemNote = document.querySelector('.item-note');
             if (itemNote) {
               itemNote.classList.add('highlight');
               console.log('Highlighted item note after DOM update');

@@ -5,6 +5,7 @@
   import { onMount } from 'svelte';
   import '../../../app.css';
   import LinkOptionsPopup from '$lib/components/LinkOptionsPopup.svelte';
+  import { browser } from '$app/environment';
 
   let entity = null;
   let items = [];
@@ -35,33 +36,48 @@
     }
   }
 
+  let isLoading = true;
+
   async function loadEntityAndItems() {
-    const { data: entityData, error: entityError } = await supabase
-      .from('entities')
-      .select('*')
-      .eq('id', entityId)
-      .single();
+  isLoading = true;
+  try {
+    const [responses] = await Promise.all([
+      Promise.all([
+        supabase
+          .from('entities')
+          .select('*')
+          .eq('id', entityId)
+          .single(),
+        supabase
+          .from('items')
+          .select('*')
+          .eq('entity_id', entityId)
+          .order('last_updated', { ascending: true })
+      ]),
+      new Promise(resolve => setTimeout(resolve, 500))
+    ]);
 
-    if (entityError) {
-      console.error('Error loading entity:', entityError);
+    const [entityData, itemsData] = responses;
+
+    if (entityData.error) {
+      console.error('Error loading entity:', entityData.error);
       return;
     }
 
-    entity = entityData;
-
-    const { data: itemsData, error: itemsError } = await supabase
-      .from('items')
-      .select('*')
-      .eq('entity_id', entityId)
-      .order('last_updated', { ascending: true });
-
-    if (itemsError) {
-      console.error('Error loading items:', itemsError);
+    if (itemsData.error) {
+      console.error('Error loading items:', itemsData.error);
       return;
     }
 
-    items = itemsData;
+    entity = entityData.data;
+    items = itemsData.data;
+  } catch (error) {
+    console.error('Error loading entity data:', error);
+  } finally {
+    isLoading = false;
   }
+}
+
 
   async function createItem() {
   if (newItemName.trim()) {
@@ -256,7 +272,28 @@ function handleOptionClick(action) {
   showPopup = false;
 }
 </script>
-
+{#if isLoading && (!browser || !window.tutorial || !window.tutorial.currentStep)}
+  <div class="folder-view skeleton">
+    <div class="skeleton-header"></div>
+    <div class="skeleton-sections">
+      <div class="skeleton-section">
+        <div class="skeleton-section-header"></div>
+        <div class="skeleton-entities">
+          <div class="skeleton-entity"></div>
+          <div class="skeleton-entity"></div>
+          <div class="skeleton-entity"></div>
+        </div>
+      </div>
+      <div class="skeleton-section">
+        <div class="skeleton-section-header"></div>
+        <div class="skeleton-entities">
+          <div class="skeleton-entity"></div>
+          <div class="skeleton-entity"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+{:else}
 <div class="entity-page">
   <div class="entity-header">
     <button class="back-button" on:click={goBackToFolder}>🠈</button>
@@ -296,8 +333,11 @@ function handleOptionClick(action) {
             showOptionsPopup(item, rect);
           } else {
             openNoteSidebar(item);
+            if (window.tutorial && window.tutorial.currentStep === 6) {
+              window.tutorial.nextStep();
+            }
           }
-        }}>
+        }}>        
 {#if item.note}
   {@const parsed = parseNoteWithLinks(item.note)}
   {#if parsed.hasLinks}
@@ -384,4 +424,5 @@ function handleOptionClick(action) {
     link={popupLink}
     onOptionClick={handleOptionClick}
   />
+{/if}
 {/if}
