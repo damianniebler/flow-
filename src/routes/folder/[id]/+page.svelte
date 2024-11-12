@@ -16,6 +16,7 @@
   let folderName = '';
   let allFolders = [];
   let isLoading = true;
+  let isInitialLoad = true;
 
   let pendingUpdates = Promise.resolve();
 
@@ -28,7 +29,9 @@
   onMount(loadSections);
 
   async function loadSections() {
-  isLoading = true;
+  if (!sections.length) {
+    isLoading = true;
+  }
   try {
     const [responses] = await Promise.all([
       Promise.all([
@@ -190,9 +193,10 @@ onMount(() => {
         console.error('Error creating section:', error);
       } else {
         console.log('Section created successfully:', data[0]);
-        const currentInputValue = newSectionName;
+        if (!window.tutorial) {
+          newSectionName = '';
+        }
         await loadSections();
-        newSectionName = currentInputValue;
         if (window.tutorial && typeof window.tutorial.sectionCreated === 'function') {
           console.log('Calling tutorial.sectionCreated');
           window.tutorial.sectionCreated(data[0].id);
@@ -201,13 +205,6 @@ onMount(() => {
     }
   }
 }
-
-
-
-
-
-
-
 
 function addEntityToSection(sectionId) {
   let newEntityName = '';
@@ -400,7 +397,7 @@ async function createEntity(sectionId, entityName) {
   }
 
 </script>
-{#if isLoading && (!browser || !window.tutorial || !window.tutorial.currentStep)}
+{#if isInitialLoad && isLoading && (!browser || !window.tutorial || !window.tutorial.currentStep)}
   <div class="folder-view skeleton">
     <div class="skeleton-header"></div>
     <div class="skeleton-sections">

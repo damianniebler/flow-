@@ -801,10 +801,36 @@
   .auth-links {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1rem;
+    margin-top: 1rem;
     margin-bottom: 1rem;
+    width: 100%;
 }
+
 
 .separator {
     color: var(--button-bg);
+}
+
+.login-card {
+    background-color: var(--section-bg);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.login-card form {
+    margin-top: 1.5rem;
+}
+
+.login-card input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--section-bg);
+    border-radius: 6px;
+    margin-top: 0.5rem;
 }
