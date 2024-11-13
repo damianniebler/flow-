@@ -18,7 +18,7 @@
 </script>
 <div class="login-container">
     <div class="login-card">
-        <div class="logo">Flow</div>
+        <div class="logo">Flowscend</div>
         <div class="auth-links">
             <b>Login</b>
             <span class="separator">|</span>
