@@ -9,11 +9,14 @@
 
   html {
 	font-family: var(--font-family);
+	overflow-x: hidden;
   }
 
   body {
 	background-color: var(--bg-color);
 	color: var(--text-color);
+	margin: 0;;
+	overflow-x: hidden;
   }
   
   .dark-mode {
@@ -786,7 +789,6 @@
 
   .logo{
 	text-align: center;
-	letter-spacing: .5rem;
 	font-size: 1.75rem;
   }
 

@@ -315,7 +315,7 @@ function handleOptionClick(action) {
           </button>
           
           <span class="item-name">{item.name}</span>
-          <span class="last-updated">Last updated: {formatRelativeTime(item.last_updated)}</span>
+          <span class="last-updated">Updated {formatRelativeTime(item.last_updated)}</span>
           <button on:click={() => updateTimestamp(item)} class="update-timestamp-btn">
             <i class="fas fa-sync-alt"></i>
           </button>          
@@ -369,7 +369,7 @@ function handleOptionClick(action) {
           </button>
           
           <span class="item-name">{item.name}</span>
-          <span class="last-updated">Last updated: {formatRelativeTime(item.last_updated)}</span>
+          <span class="last-updated">Updated: {formatRelativeTime(item.last_updated)}</span>
           <button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
           <button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
         </div>

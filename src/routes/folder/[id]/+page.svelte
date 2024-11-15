@@ -457,7 +457,7 @@ async function createEntity(sectionId, entityName) {
         {#each section.entities as entity (entity.uniqueId)}
         <li class="entity-item">
           <a href="/entity/{entity.id}?folderId={currentFolderId}" class="entity-name">{entity.name}</a>
-          <span class="entity-timestamp">Last updated: {formatRelativeTime(entity.last_updated)}</span>
+          <span class="entity-timestamp">Updated {formatRelativeTime(entity.last_updated)}</span>
           <div class="entity-actions">
             <button class="btn-icon" on:click={() => renameEntity(entity)}>✏️</button>
             <select on:change={(e) => moveEntityToSection(entity, e.target.value)}>
