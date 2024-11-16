@@ -75,8 +75,9 @@
   </div>
 
   <div class="search-dropdown">
+    <label for="entity">Entity:</label>
     <input
-      type="text"
+      type="text" id="entity"
       bind:value={searchTerm}
       on:input={handleSearchInput}
       placeholder="Search for entity..."
@@ -101,7 +102,7 @@
   <textarea bind:value={note} placeholder="Add a note (optional)" />
  
   <div class="button-container">
-    <button on:click={createItem} disabled={!selectedEntityId}>Create</button>
-    <button on:click={() => dispatch('close')}>Cancel</button>
+    <button class="button" on:click={createItem} disabled={!selectedEntityId}>Create</button>
+    <button class="second-button" on:click={() => dispatch('close')}>Cancel</button>
   </div>
 </div>
