@@ -48,7 +48,6 @@
 	padding: 8px 16px;
   }
   
-  
   header nav ul {
 	display: flex;
 	padding: 0;
@@ -257,6 +256,9 @@
 	height: 90vh;
 	padding: 20px;
 	position: relative;
+	textarea {
+		background-color: var(--section-bg);
+	}
   }
   
   textarea {
@@ -702,7 +704,10 @@
 	top: 1rem;
 	left: 1rem;
 	z-index: 1000;
-}
+	display: flex; /* Add this */
+	align-items: center; /* Add this */
+	gap: 1rem; /* Add this */
+  }
 
 .sidebar-toggle {
 	background: none;

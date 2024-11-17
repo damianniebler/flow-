@@ -19,6 +19,7 @@
                 ▶
             {/if}
         </button>
+        <div class="logo">Flowscend</div>
     </div>
     <nav>
         <ul>

@@ -153,7 +153,6 @@ $: if ($newFolderId) {
 </script>
 
 <aside class:hidden={!$sidebarVisible}>
-  <div class="logo">Flowscend</div>
   {#if isLoading && (!browser || !window.tutorial || !window.tutorial.currentStep)}
     <div class="skeleton">
       <div class="skeleton-header"></div>
