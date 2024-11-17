@@ -1,11 +1,14 @@
 <script>
   import { supabase } from '../../supabase';
   import { user } from '$lib/auth';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import CreateItemPopup from '$lib/components/CreateItemPopup.svelte';
-  import { debounce } from 'lodash';
+  import pkg from 'lodash';
   import '../../app.css';
+  import { browser } from '$app/environment';
+  import { get } from 'svelte/store';
 
+  const { debounce } = pkg;
   let noteContent = '';
   let selectedText = '';
   let showPopup = false;
@@ -15,26 +18,24 @@
   let selectionEnd = 0;
   let buttonPosition = { top: 0, left: 0 };
   let textareaElement = null;
+  let isSelecting = false;
 
   let isLoading = true;
 
-onMount(async () => {
-  if ($user) {
-    const [responses] = await Promise.all([
-      Promise.all([
-        supabase
-          .from('users')
-          .select('notes')
-          .eq('id', $user.id)
-          .single(),
-        supabase
-          .from('entities')
-          .select('id, name'),
-        new Promise(resolve => setTimeout(resolve, 500))
-      ])
-    ]);
+  $: if ($user) {
+    loadData();
+  }
 
-    const [userData, entitiesData] = responses;
+  async function loadData() {
+    isLoading = true;
+    const [userData, entitiesData] = await Promise.all([
+      supabase
+        .from('users')
+        .select('notes')
+        .eq('id', $user.id)
+        .single(),
+      supabase.from('entities').select('id, name'),
+    ]);
 
     if (userData.data) {
       noteContent = userData.data.notes || '';
@@ -43,9 +44,43 @@ onMount(async () => {
     if (entitiesData.data) {
       entities = entitiesData.data;
     }
+    isLoading = false;
   }
-  isLoading = false;
-});
+
+  function handleMousedown(event) {
+    if (event.target === textareaElement) {
+      isSelecting = true;
+    }
+  }
+
+  function handleGlobalMouseup(event) {
+    const createItemButton = event.target.closest('.create-item-option');
+    if (!createItemButton) {
+      showCreateItemOption = false;
+    }
+
+    if (
+      isSelecting &&
+      textareaElement &&
+      textareaElement.selectionStart !== textareaElement.selectionEnd
+    ) {
+      handleSelection(event);
+    }
+
+    isSelecting = false;
+  }
+
+  onMount(() => {
+    if (browser) {
+      document.addEventListener('mouseup', handleGlobalMouseup);
+    }
+  });
+
+  onDestroy(() => {
+    if (browser) {
+      document.removeEventListener('mouseup', handleGlobalMouseup);
+    }
+  });
 
   const saveNote = debounce(async () => {
     if ($user) {
@@ -61,28 +96,32 @@ onMount(async () => {
   }, 1000);
 
   function handleSelection(event) {
-  if (textareaElement) {
-    selectionStart = textareaElement.selectionStart;
-    selectionEnd = textareaElement.selectionEnd;
-    selectedText = noteContent.slice(selectionStart, selectionEnd).trim();
+    if (textareaElement) {
+      selectionStart = textareaElement.selectionStart;
+      selectionEnd = textareaElement.selectionEnd;
+      selectedText = noteContent.slice(selectionStart, selectionEnd).trim();
 
-    if (selectedText) {
-      if (event.type === 'keydown' && event.altKey && event.key.toLowerCase() === 'c') {
-        event.preventDefault(); // Prevent any default browser behavior
-        showPopup = true;
+      if (selectedText) {
+        if (event.type === 'mouseup') {
+          showCreateItemOption = true;
+          buttonPosition = {
+            top: event.clientY + window.scrollY + 20,
+            left: event.clientX,
+          };
+        } else if (
+          event.type === 'keydown' &&
+          event.altKey &&
+          event.key.toLowerCase() === 'c'
+        ) {
+          event.preventDefault();
+          showPopup = true;
+          showCreateItemOption = false;
+        }
+      } else {
         showCreateItemOption = false;
-      } else if (event.type === 'mouseup') {
-        showCreateItemOption = true;
-        buttonPosition = {
-          top: event.clientY + window.scrollY + 20,
-          left: event.clientX
-        };
       }
-    } else {
-      showCreateItemOption = false;
     }
   }
-}
 
   function handleCreateItemClick() {
     showPopup = true;
@@ -118,26 +157,28 @@ onMount(async () => {
       bind:this={textareaElement}
       bind:value={noteContent}
       on:input={saveNote}
-      on:mouseup={(e) => handleSelection(e)}
+      on:mousedown={handleMousedown}
       on:keydown={(e) => handleSelection(e)}
       placeholder="Start typing your notes here..."
       rows="20"
       cols="100"
     ></textarea>
     {#if showCreateItemOption}
-      <div class="create-item-option" style="top: {buttonPosition.top}px; left: {buttonPosition.left}px;">
+      <div
+        class="create-item-option"
+        style="top: {buttonPosition.top}px; left: {buttonPosition.left}px;"
+      >
         <button on:click={handleCreateItemClick}>Create Item</button>
       </div>
     {/if}
   </div>
 {/if}
 
-
 {#if showPopup}
   <CreateItemPopup
     text={selectedText}
     {entities}
     on:createItem={handleCreateItem}
-    on:close={() => showPopup = false}
+    on:close={() => (showPopup = false)}
   />
 {/if}
