@@ -2,6 +2,15 @@ class Tutorial {
   constructor() {
     console.log('Tutorial initialized');
     this.sectionsCreated = 0;
+
+    const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+    const tutorialDismissed = sessionStorage.getItem('tutorialDismissed');
+    
+    if (!tutorialCompleted && !tutorialDismissed) {
+        document.addEventListener('UserLoggedIn', () => {
+            this.start();
+        });
+    }
     console.log('Tutorial initialized, sectionsCreated:', this.sectionsCreated);
 
     this.initialStep = {
@@ -219,12 +228,6 @@ class Tutorial {
     this.currentStep = 0;
     this.tutorialContent = null;
     this.currentStepSet = [this.initialStep];
-    const tutorialCompleted = localStorage.getItem('tutorialCompleted');
-    const tutorialDismissed = sessionStorage.getItem('tutorialDismissed');
-
-    if (tutorialCompleted || tutorialDismissed) {
-      this.hideOverlay();
-    }
     console.log('Tutorial steps:', this.currentStepSet);
   }
 
@@ -247,14 +250,17 @@ class Tutorial {
     this.prefillInput();
     this.showStep();
   }
-  
-  
 
-  start() {
-    console.log('Starting tutorial');
-    this.showOverlay();
-    this.showStep();
-  }
+  start(forceStart = false) {
+    const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+    const tutorialDismissed = sessionStorage.getItem('tutorialDismissed');
+    
+    if (forceStart || (!tutorialCompleted && !tutorialDismissed)) {
+        console.log('Starting tutorial');
+        this.showOverlay();
+        this.showStep();
+    }
+}
 
   showOverlay() {
     console.log('Showing overlay');
@@ -695,11 +701,11 @@ sectionCreated(sectionId) {
     this.hideOverlay();
     
     if (this.currentStep === this.currentStepSet.length - 1) {
-      localStorage.setItem('tutorialCompleted', 'true');
+        localStorage.setItem('tutorialCompleted', 'true');
     } else {
-      sessionStorage.setItem('tutorialDismissed', 'true');
+        sessionStorage.setItem('tutorialDismissed', 'true');
     }
-  }
+}
 }
 
 window.tutorial = new Tutorial();
