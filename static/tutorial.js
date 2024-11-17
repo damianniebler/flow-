@@ -219,6 +219,12 @@ class Tutorial {
     this.currentStep = 0;
     this.tutorialContent = null;
     this.currentStepSet = [this.initialStep];
+    const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+    const tutorialDismissed = sessionStorage.getItem('tutorialDismissed');
+
+    if (tutorialCompleted || tutorialDismissed) {
+      this.hideOverlay();
+    }
     console.log('Tutorial steps:', this.currentStepSet);
   }
 
@@ -660,7 +666,7 @@ sectionCreated(sectionId) {
     if (step.showThanksButton) {
       const thanksButton = document.createElement('button');
       thanksButton.textContent = 'Thanks!';
-      thanksButton.className = 'thanks-button';
+      thanksButton.className = 'button thanks-button';
       thanksButton.addEventListener('click', () => this.endTutorial());
       tutorialContent.appendChild(thanksButton);
     }
@@ -687,8 +693,12 @@ sectionCreated(sectionId) {
   endTutorial() {
     console.log('Ending tutorial');
     this.hideOverlay();
-    localStorage.setItem('tutorialCompleted', 'true');
-    console.log('Tutorial completed flag set in localStorage');
+    
+    if (this.currentStep === this.currentStepSet.length - 1) {
+      localStorage.setItem('tutorialCompleted', 'true');
+    } else {
+      sessionStorage.setItem('tutorialDismissed', 'true');
+    }
   }
 }
 

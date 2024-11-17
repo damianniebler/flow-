@@ -512,6 +512,7 @@
 	width: 100%;
 	height: 100%;
 	z-index: 9998;
+	background-color: rgba(0, 0, 0, 0.5);
   }
   
   .hidden {
@@ -528,10 +529,9 @@
   .tutorial-message {
 	position: fixed;
 	z-index: 10000;
-	background-color: white;
+	background-color: var(--section-bg);
 	padding: 20px;
 	border-radius: 5px;
-	box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   }
 
   .note-sidebar-buttons {
@@ -558,11 +558,12 @@
   }
   
   .tutorial-content {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	background-color: white;
+	background-color: var(--section-bg);
 	padding: 20px;
 	border-radius: 10px;
 	text-align: center;
@@ -571,9 +572,24 @@
   }
   
   .tutorial-message {
+	background-color: var(--section-bg);
 	font-size: 18px;
-	margin-bottom: 20px;
 	position: relative;
+  }
+
+  .tutorial-close-button {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1.2rem;
+	color: var(--text-color);
+  }
+  
+  .tutorial-close-button:hover {
+	transform: scale(1.1);
   }
   
   .options-container {
