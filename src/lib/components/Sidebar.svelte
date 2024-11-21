@@ -74,9 +74,7 @@
   }
 
   async function createFolder() {
-  console.log('createFolder function called');
   if (newFolderName.trim() && $user) {
-    console.log('Attempting to create folder:', newFolderName);
     const { data, error } = await supabase
       .from('folders')
       .insert({
@@ -85,37 +83,37 @@
       })
       .select();
 
-      if (error) {
-    console.error('Error creating folder:', error);
-  } else {
-    console.log('Folder created successfully:', data[0]);
-    folders = [...folders, data[0]];
-    newFolderName = '';
+    if (error) {
+      console.error('Error creating folder:', error);
+    } else {
+      folders = [...folders, data[0]];
+      newFolderName = '';
 
-    // Update the newFolderId store
-    newFolderId.set(data[0].id);
-    await tick(); 
-    // IMPORTANT: Wait for the next microtask to ensure the DOM updates
-    Promise.resolve().then(() => {
-      newFolderId.set(null);
-      // Now signal that the DOM is updated
-      newFolderId.set(data[0].id);
-    });
+      // Only trigger tutorial actions if tutorial is active
+      if (window.tutorial && window.tutorial.currentStep !== undefined) {
+        newFolderId.set(data[0].id);
+        await tick();
+        Promise.resolve().then(() => {
+          newFolderId.set(null);
+          newFolderId.set(data[0].id);
+        });
+      }
     }
   }
 }
 
 
 
+
 $: if ($newFolderId) {
-  console.log('New folder ID detected in Sidebar.svelte:', $newFolderId);
-  if (window.tutorial && typeof window.tutorial.folderCreated === 'function') {
-    window.tutorial.folderCreated($newFolderId);
-  } else {
-    console.warn('window.tutorial or folderCreated method not available');
+    console.log('New folder ID detected in Sidebar.svelte:', $newFolderId);
+    if (window.tutorial && window.tutorial.currentStep !== undefined && typeof window.tutorial.folderCreated === 'function') {
+      window.tutorial.folderCreated($newFolderId);
+    }
+    // MOVE this line AFTER the tutorial function call
+    newFolderId.set(null); 
   }
-  newFolderId.set(null);
-}
+
 
 
   async function renameFolder(folder) {
@@ -172,7 +170,16 @@ $: if ($newFolderId) {
       <ul>
         {#each folders as folder}
           <li>
-            <a href="/folder/{folder.id}">{folder.name}</a>
+            <a 
+            href="/folder/{folder.id}" 
+            on:click={() => {
+              if (window.innerWidth <= 768) {
+                sidebarVisible.set(false);
+              }
+            }}
+          >
+            {folder.name}
+          </a>
             <button class="btn-icon" on:click={() => renameFolder(folder)}>✏️</button>
             <button class="btn-icon" on:click={() => deleteFolder(folder)}>🗑️</button>
           </li>

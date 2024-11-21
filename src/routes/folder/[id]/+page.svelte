@@ -209,7 +209,7 @@ onMount(() => {
 function addEntityToSection(sectionId) {
   let newEntityName = '';
   
-  if (window.tutorial && window.tutorial.currentStep !== 4) {
+  if (window.tutorial && window.tutorial.currentStep !== undefined && window.tutorial.currentStep === 4) {
     if (window.tutorial.currentStepSet === window.tutorial.workSteps) {
       newEntityName = "Joe's Bakery";
     } else if (window.tutorial.currentStepSet === window.tutorial.schoolSteps) {
@@ -227,9 +227,6 @@ function addEntityToSection(sectionId) {
     createEntity(sectionId, newEntityName.trim());
   }
 }
-
-
-
 
 async function createEntity(sectionId, entityName) {
   const { data, error } = await supabase

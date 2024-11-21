@@ -5,9 +5,21 @@
     
     const handleSignOut = () => signOut();
     const toggleSidebar = () => sidebarVisible.update(v => !v);
-    const startTutorial = () => window.tutorial.start(true);
+    const startTutorial = () => {
+        // Ensure tutorial is initialized before starting
+        if (!window.tutorial) {
+            window.tutorial = new Tutorial();
+        }
+        window.tutorial.start(true); // Force start regardless of previous state
+    };
 
-    
+    let isMenuOpen = false;
+    const toggleMenu = () => {
+        isMenuOpen = !isMenuOpen;
+        if (window.innerWidth <= 768) {
+            sidebarVisible.set(false);
+        }
+    };
     let showFeedback = false;
 </script>
 
@@ -22,8 +34,11 @@
             {/if}
         </button>
         <div class="logo">Flowscend</div>
+        <button class="hamburger-menu" on:click={toggleMenu}>
+            <i class="fas fa-bars"></i>
+        </button>
     </div>
-    <nav>
+    <nav class:menu-open={isMenuOpen}>
         <ul>
           <li><a class="second-button" href="/notepad">Notepad</a></li>
           <li><button class="second-button" on:click={startTutorial}>Tutorial</button></li>

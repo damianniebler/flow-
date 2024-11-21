@@ -254,11 +254,18 @@ class Tutorial {
   start(forceStart = false) {
     const tutorialCompleted = localStorage.getItem('tutorialCompleted');
     const tutorialDismissed = sessionStorage.getItem('tutorialDismissed');
-    
+
     if (forceStart || (!tutorialCompleted && !tutorialDismissed)) {
         console.log('Starting tutorial');
+
+        // Reinitialize currentStep and currentStepSet if tutorial starts
+        this.currentStep = 0;
+        this.currentStepSet = [this.initialStep];
+
         this.showOverlay();
         this.showStep();
+    } else {
+        this.currentStep = undefined; // For checks in other functions
     }
 }
 
@@ -359,6 +366,8 @@ prefillInput() {
 
 
 folderCreated(folderId) {
+  if (this.currentStep === undefined) return;
+
   const folderInput = document.getElementById('new-folder-input');
 
   if (folderInput) {
@@ -377,10 +386,6 @@ folderCreated(folderId) {
   this.nextStep();
   this.highlightNewFolder(folderId);
 }
-
-
-
-
 
 sectionCreated(sectionId) {
   console.log('sectionCreated called, current sectionsCreated:', this.sectionsCreated);
@@ -423,16 +428,19 @@ sectionCreated(sectionId) {
 }
 
 
-  highlightNewFolder(folderId) {
-    const folderElement = document.querySelector(`a[href="/folder/${folderId}"]`);
-    if (folderElement) {
-      folderElement.classList.add('highlight');
-      folderElement.addEventListener('click', () => {
-        this.nextStep();
-        folderElement.classList.remove('highlight');
-      });
-    }
+highlightNewFolder(folderId) {
+  if (this.currentStep === undefined) return;
+  
+  const folderElement = document.querySelector(`a[href="/folder/${folderId}"]`);
+  if (folderElement) {
+    folderElement.classList.add('highlight');
+    folderElement.addEventListener('click', () => {
+      this.nextStep();
+      folderElement.classList.remove('highlight');
+    });
   }
+}
+
 
   highlightElements() {
     console.log('Highlighting elements for step:', this.currentStep, 'Sections created:', this.sectionsCreated);
@@ -699,13 +707,15 @@ sectionCreated(sectionId) {
   endTutorial() {
     console.log('Ending tutorial');
     this.hideOverlay();
-    
-    if (this.currentStep === this.currentStepSet.length - 1) {
+    this.currentStep = undefined; // Crucial: Reset currentStep
+
+    if (this.currentStepSet && this.currentStepSet.length > 0 && this.currentStep === this.currentStepSet.length - 1) {
         localStorage.setItem('tutorialCompleted', 'true');
     } else {
         sessionStorage.setItem('tutorialDismissed', 'true');
     }
 }
+
 }
 
 window.tutorial = new Tutorial();
