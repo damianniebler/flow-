@@ -1049,3 +1049,13 @@ textarea::-webkit-scrollbar {
         justify-content: space-between;
     }
 }
+
+.tutorial-dont-show {
+  margin-top: 20px;
+  padding: 5px 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-color);
+}

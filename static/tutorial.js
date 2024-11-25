@@ -647,6 +647,14 @@ highlightNewFolder(folderId) {
     const tutorialContent = document.createElement('div');
     tutorialContent.className = 'tutorial-content';
 
+    const dontShowButton = document.createElement('button');
+    dontShowButton.textContent = "End tutorial and don't show again.";
+    dontShowButton.className = 'tutorial-dont-show';
+    dontShowButton.addEventListener('click', () => {
+        localStorage.setItem('tutorialCompleted', 'true');
+        this.endTutorial();
+    });
+
     if (this.currentStep === 6) {
       tutorialContent.classList.add('last-step');
     }
@@ -688,6 +696,7 @@ highlightNewFolder(folderId) {
   
 
     
+    tutorialContent.appendChild(dontShowButton);
     overlay.appendChild(tutorialContent);
   
     console.log('Updated overlay content:', overlay.innerHTML);
