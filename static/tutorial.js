@@ -451,7 +451,7 @@ highlightNewFolder(folderId) {
       const setupSectionCreation = () => {
         const input = document.getElementById('new-section-input');
         const createSectionButton = document.querySelector('#btn-create-section');
-    
+      
         if (input && createSectionButton) {
           console.log('Setting up section creation, initial sectionsCreated:', this.sectionsCreated);
           this.sectionsCreated = this.sectionsCreated || 0;
@@ -466,37 +466,30 @@ highlightNewFolder(folderId) {
           } else if (this.currentStepSet === this.artSteps) {
             sectionNames = ['Ongoing Projects', 'Finished Artworks'];
           }
-    
+      
           const updateInputAndHighlight = () => {
-            console.log('Updating input and highlighting, sectionsCreated:', this.sectionsCreated);
             input.value = sectionNames[this.sectionsCreated];
             input.dispatchEvent(new Event('input'));
             input.classList.add('highlight');
             createSectionButton.classList.add('highlight');
           };
-    
-  
+      
           updateInputAndHighlight();
-  
+      
           const handleSectionCreation = () => {
-            console.log('Section creation button clicked, sectionsCreated before:', this.sectionsCreated);
             window.createSection(new Event('click'));
-            if (this.sectionsCreated < sectionNames.length - 1) {
+            if (this.sectionsCreated < 1) {
               this.sectionsCreated++;
-              console.log('Incrementing sectionsCreated, new value:', this.sectionsCreated);
               updateInputAndHighlight();
             } else {
-              console.log('Both sections created, preparing to move to next step');
-              this.sectionsCreated = 0;
               input.value = '';
               input.classList.remove('highlight');
               createSectionButton.classList.remove('highlight');
+              this.sectionsCreated = 0;
               this.nextStep();
-              console.log('Moving to next step, reset sectionsCreated to:', this.sectionsCreated);
             }
           };
-  
-          console.log('Adding click event listener to create section button');
+      
           createSectionButton.removeEventListener('click', handleSectionCreation);
           createSectionButton.addEventListener('click', handleSectionCreation);
         } else {

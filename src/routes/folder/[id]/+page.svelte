@@ -17,6 +17,7 @@
   let allFolders = [];
   let isLoading = true;
   let isInitialLoad = true;
+  let isMobile = false;
 
   let pendingUpdates = Promise.resolve();
 
@@ -86,6 +87,10 @@
 
 
 onMount(() => {
+  isMobile = window.innerWidth <= 768;
+  window.addEventListener('resize', () => {
+      isMobile = window.innerWidth <= 768;
+    });
   loadSections();
   loadAllFolders();
   window.createSection = createSection;
@@ -124,24 +129,25 @@ onMount(() => {
     }
 }
 
-  function handleEntityDnd(e, targetSectionId) {
-    const newEntities = e.detail.items.filter(item => !item.id.startsWith('dnd-'));
-    const uniqueEntities = Array.from(new Map(newEntities.map(item => [item.id, item])).values());
+function handleEntityDnd(e, targetSectionId) {
+  if (isMobile) return;
+  const newEntities = e.detail.items.filter(item => !item.id.startsWith('dnd-'));
+  const uniqueEntities = Array.from(new Map(newEntities.map(item => [item.id, item])).values());
+  
+  sections = sections.map(section => ({
+    ...section,
+    entities: section.id === targetSectionId
+      ? uniqueEntities.map((entity, index) => ({
+          ...entity,
+          uniqueId: `${targetSectionId}-${entity.id}`,
+          order: index,
+          section_id: targetSectionId
+        }))
+      : section.entities.filter(entity => !uniqueEntities.some(e => e.id === entity.id))
+  }));
 
-    sections = sections.map(section => ({
-      ...section,
-      entities: section.id === targetSectionId
-        ? uniqueEntities.map((entity, index) => ({
-            ...entity,
-            uniqueId: `${targetSectionId}-${entity.id}`,
-            order: index,
-            section_id: targetSectionId
-          }))
-        : section.entities.filter(entity => !uniqueEntities.some(e => e.id === entity.id))
-    }));
-
-    debouncedUpdateEntities(uniqueEntities, targetSectionId);
-  }
+  debouncedUpdateEntities(uniqueEntities, targetSectionId);
+}
 
   const debouncedUpdateEntities = debounce((entities, targetSectionId) => {
     pendingUpdates = pendingUpdates.then(() => Promise.all(entities.map(async (entity, index) => {
@@ -193,7 +199,8 @@ onMount(() => {
         console.error('Error creating section:', error);
       } else {
         console.log('Section created successfully:', data[0]);
-        if (!window.tutorial) {
+        // Clear input only when not in step 2 of tutorial
+        if (!window.tutorial || window.tutorial.currentStep !== 2 || window.tutorial.sectionsCreated >= 2) {
           newSectionName = '';
         }
         await loadSections();
@@ -206,10 +213,11 @@ onMount(() => {
   }
 }
 
+
 function addEntityToSection(sectionId) {
   let newEntityName = '';
   
-  if (window.tutorial && window.tutorial.currentStep !== undefined && window.tutorial.currentStep === 4) {
+  if (window.tutorial && window.tutorial.currentStep !== undefined && window.tutorial.currentStep === 3) {
     if (window.tutorial.currentStepSet === window.tutorial.workSteps) {
       newEntityName = "Joe's Bakery";
     } else if (window.tutorial.currentStepSet === window.tutorial.schoolSteps) {
@@ -357,14 +365,27 @@ async function createEntity(sectionId, entityName) {
     }
   }
 
-  function handleSectionDnd(e) {
-    const newSections = e.detail.items;
-    const validSections = newSections.filter(section => !section.id.startsWith('id:dnd-shadow-placeholder'));
-
-    sections = validSections.map((section, index) => ({ ...section, order: index }));
-
-    debouncedUpdateSections(validSections);
+  async function moveSection(section, direction) {
+  const currentIndex = sections.indexOf(section);
+  const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+  
+  if (newIndex >= 0 && newIndex < sections.length) {
+    const newSections = [...sections];
+    [newSections[currentIndex], newSections[newIndex]] = [newSections[newIndex], newSections[currentIndex]];
+    
+    sections = newSections.map((section, index) => ({ ...section, order: index }));
+    debouncedUpdateSections(sections);
   }
+}
+
+
+  function handleSectionDnd(e) {
+  if (isMobile) return;
+  const newSections = e.detail.items;
+  const validSections = newSections.filter(section => !section.id.startsWith('id:dnd-shadow-placeholder'));
+  sections = validSections.map((section, index) => ({ ...section, order: index }));
+  debouncedUpdateSections(validSections);
+}
 
   const debouncedUpdateSections = debounce((validSections) => {
     pendingUpdates = pendingUpdates.then(() => Promise.all(
@@ -430,27 +451,29 @@ async function createEntity(sectionId, entityName) {
   </div>
 
   <div class="sections-container"
-    use:dndzone={{items: sections, type: 'section', flipDurationMs: 150}}
-    on:consider={handleSectionDnd}
-    on:finalize={handleSectionDnd}
-  >
+  use:dndzone={isMobile ? {items: sections, dragDisabled: true} : {items: sections, type: 'section', flipDurationMs: 150}}
+  on:consider={handleSectionDnd}
+  on:finalize={handleSectionDnd}
+>
     {#each sections as section (section.id)}
       <div class="section">
         <div class="section-header">
           <h3 class="section-title">{section.name}</h3>
           <div class="section-actions">
+            <button class="btn-icon-move" on:click={() => moveSection(section, 'up')} disabled={sections.indexOf(section) === 0}>⮝</button>
+            <button class="btn-icon-move" on:click={() => moveSection(section, 'down')} disabled={sections.indexOf(section) === sections.length - 1}>⮟</button>
             <button class="btn-icon" on:click={() => renameSection(section)}>✏️</button>
             <button class="btn-icon" on:click={() => deleteSection(section)}>🗑️</button>
           </div>
         </div>
        
         <ul class="entity-list"
-          use:dndzone={{items: section.entities, type: 'entity', flipDurationMs: 150}}
-          on:consider={(e) => handleEntityDnd(e, section.id)}
-          on:finalize={(e) => handleEntityDnd(e, section.id)}
-          on:consider={() => isDraggingEntity = true}
-          on:finalize={() => isDraggingEntity = false}
-        >
+        use:dndzone={isMobile ? {items: section.entities, dragDisabled: true} : {items: section.entities, type: 'entity', flipDurationMs: 150}}
+        on:consider={(e) => handleEntityDnd(e, section.id)}
+        on:finalize={(e) => handleEntityDnd(e, section.id)}
+        on:consider={() => isDraggingEntity = true}
+        on:finalize={() => isDraggingEntity = false}
+      >
         {#each section.entities as entity (entity.uniqueId)}
         <li class="entity-item">
           <a href="/entity/{entity.id}?folderId={currentFolderId}" class="entity-name">{entity.name}</a>

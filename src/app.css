@@ -9,14 +9,12 @@
 
   html {
 	font-family: var(--font-family);
-	overflow-x: hidden;
   }
 
   body {
 	background-color: var(--bg-color);
 	color: var(--text-color);
 	margin: 0;;
-	overflow-x: hidden;
   }
   
   .dark-mode {
@@ -79,6 +77,10 @@
 	flex-direction: column;
 	max-width: 300px;
 	margin: 0 auto;
+  }
+
+  form.side-form {
+    margin: 0;
   }
   
   .error {
@@ -923,6 +925,16 @@ textarea::-webkit-scrollbar {
 	justify-content: flex-end;
   }
 
+  .hamburger-menu {
+    display: none;
+}
+
+  .btn-icon-move{
+    all: unset;
+    color: var(--button-bg);
+    background-color: transparent;
+  }
+
   /* Add these media queries for mobile responsiveness */
   @media (max-width: 768px) {
     aside {
@@ -954,8 +966,9 @@ textarea::-webkit-scrollbar {
     }
   
     .logo {
-      margin-left: 3rem;
+      margin-left: 0;
     }
+
     header {
         padding: 10px;
         flex-direction: column;
@@ -970,14 +983,14 @@ textarea::-webkit-scrollbar {
     }
 
     .hamburger-menu {
-        display: block;
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        color: var(--button-bg);
-        cursor: pointer;
-		margin-right: 1rem;
-    }
+      display: block;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--button-bg);
+      cursor: pointer;
+      margin-right: 1rem;
+  }
 
     nav {
         display: none;
@@ -998,14 +1011,15 @@ textarea::-webkit-scrollbar {
     header nav ul {
         flex-direction: column;
         padding: 1rem 0;
+        gap: 0;
     }
 
     header nav ul li {
-        width: 90%;
+        width: 50%;
         text-align: center;
         margin: 0 auto;
     }
-
+    
     .second-button {
         width: 100%;
         margin: 5px 0;

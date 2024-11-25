@@ -186,7 +186,7 @@ $: if ($newFolderId) {
         {/each}
       </ul>
 
-      <form on:submit|preventDefault={createFolder}>
+      <form class="side-form" on:submit|preventDefault={createFolder}>
         <input
           id="new-folder-input"
           type="text"

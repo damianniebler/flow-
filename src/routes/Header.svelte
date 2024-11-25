@@ -40,12 +40,12 @@
     </div>
     <nav class:menu-open={isMenuOpen}>
         <ul>
-          <li><a class="second-button" href="/notepad">Notepad</a></li>
-          <li><button class="second-button" on:click={startTutorial}>Tutorial</button></li>
-          <li><button class="second-button" on:click={() => showFeedback = true}>Give Feedback</button></li>
-          <li><button class="second-button" on:click={handleSignOut}>Logout</button></li>
+            <li><button class="second-button" on:click={() => window.location.href='/notepad'}>Notepad</button></li>
+            <li><button class="second-button" on:click={startTutorial}>Tutorial</button></li>
+            <li><button class="second-button" on:click={() => showFeedback = true}>Give Feedback</button></li>
+            <li><button class="second-button" on:click={handleSignOut}>Logout</button></li>
         </ul>
-    </nav>
+    </nav>    
 </header>
 {/if}
 
