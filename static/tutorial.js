@@ -228,7 +228,6 @@ class Tutorial {
     this.currentStep = 0;
     this.tutorialContent = null;
     this.currentStepSet = [this.initialStep];
-    console.log('Tutorial steps:', this.currentStepSet);
   }
 
   handleOptionSelection(option) {
@@ -251,44 +250,36 @@ class Tutorial {
     this.showStep();
   }
 
-  start(forceStart = false) {
-    const tutorialCompleted = localStorage.getItem('tutorialCompleted');
-    const tutorialDismissed = sessionStorage.getItem('tutorialDismissed');
+start(forceStart = false) {
+    const tutorialCompleted = localStorage.getItem('tutorialCompleted') === 'true';
+    const tutorialDismissed = sessionStorage.getItem('tutorialDismissed') === 'true';
 
     if (forceStart || (!tutorialCompleted && !tutorialDismissed)) {
         console.log('Starting tutorial');
-
-        // Reinitialize currentStep and currentStepSet if tutorial starts
         this.currentStep = 0;
         this.currentStepSet = [this.initialStep];
-
         this.showOverlay();
         this.showStep();
     } else {
-        this.currentStep = undefined; // For checks in other functions
+        this.currentStep = undefined;
     }
 }
 
   showOverlay() {
-    console.log('Showing overlay');
     document.getElementById('overlay').classList.remove('hidden');
   }
 
   hideOverlay() {
-    console.log('Hiding overlay');
     document.getElementById('overlay').classList.add('hidden');
   }
 
   showStep() {  
-    console.log('Showing step:', this.currentStep);
     const overlay = document.getElementById('overlay');
   
     if (!this.tutorialContent) {
-      console.log('Creating tutorial content element');
       this.tutorialContent = document.createElement('div');
       this.tutorialContent.className = 'tutorial-content';
       overlay.appendChild(this.tutorialContent);
-      console.log('Tutorial content element attached to DOM:', this.tutorialContent);
     }
   
     this.updateStepContent();
@@ -312,12 +303,10 @@ class Tutorial {
             this.nextStep();
             entityElement.classList.remove('highlight');
           }, { once: true });
-          console.log('Entity highlighted successfully');
         } else {
           attempts++;
           if (attempts >= maxAttempts) {
             clearInterval(waitForEntity);
-            console.log('Failed to find entity element after maximum attempts');
           }
         }
       }, 50);
@@ -343,7 +332,6 @@ class Tutorial {
   }
   
 prefillInput() {
-  console.log('Prefilling input');
   const input = document.getElementById('new-folder-input');
   
   if (input) {
@@ -358,7 +346,6 @@ prefillInput() {
     
     input.value = folderName;
     input.dispatchEvent(new Event('input'));
-    console.log(`Input prefilled with "${folderName}"`);
   } else {
     console.log('Input element not found');
   }
@@ -388,7 +375,6 @@ folderCreated(folderId) {
 }
 
 sectionCreated(sectionId) {
-  console.log('sectionCreated called, current sectionsCreated:', this.sectionsCreated);
   this.sectionsCreated++;
   console.log(`Section created: ${sectionId}, Total sections created: ${this.sectionsCreated}`);
 
@@ -723,6 +709,18 @@ highlightNewFolder(folderId) {
 window.tutorial = new Tutorial();
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM content loaded, starting tutorial');
-  window.tutorial.start();
+  console.log('DOM loaded, waiting for UserLoggedIn event');
+  
+  document.addEventListener('UserLoggedIn', () => {
+      console.log('UserLoggedIn event received');
+      const tutorialCompleted = localStorage.getItem('tutorialCompleted') === 'true';
+      const tutorialDismissed = sessionStorage.getItem('tutorialDismissed') === 'true';
+      
+      if (!tutorialCompleted && !tutorialDismissed) {
+          console.log('Starting tutorial - conditions met');
+          window.tutorial.start();
+      }
+  });
 });
+
+

@@ -39,8 +39,12 @@ export async function signIn(email, password) {
     if (error) throw error;
 
     user.set(data.user);
+    console.log('User signed in, dispatching UserLoggedIn event');
+    document.dispatchEvent(new Event('UserLoggedIn'));
     return data;
 }
+
+
 
 export async function signOut() {
     const { error } = await supabase.auth.signOut();

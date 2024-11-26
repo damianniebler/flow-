@@ -1048,6 +1048,20 @@ textarea::-webkit-scrollbar {
         width: 100%;
         justify-content: space-between;
     }
+
+    .note-sidebar {
+      width: 100%;
+      z-index: 1000;
+      left:0;
+    }
+  
+    .note-sidebar-buttons {
+      padding: 1rem;
+      background: var(--section-bg);
+      width: 100%;
+      display: flex;
+      gap: 1rem;
+    }
 }
 
 .tutorial-dont-show {
@@ -1058,4 +1072,5 @@ textarea::-webkit-scrollbar {
   cursor: pointer;
   font-size: 0.75rem;
   color: var(--text-color);
+  opacity: 0.6;
 }
