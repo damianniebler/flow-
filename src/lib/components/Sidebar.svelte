@@ -4,14 +4,14 @@
   import { user } from '$lib/auth';
   import { writable } from 'svelte/store';
   import { browser } from '$app/environment';
-  import { sidebarVisible, newFolderId } from '$lib/stores/sidebarStore'; // Import newFolderId
+  import { sidebarVisible, newFolderId } from '$lib/stores/sidebarStore';
   import '../../app.css';
   import { tick } from 'svelte';
+  import { darkMode } from '$lib/stores/sidebarStore';
 
   let isLoading = true;
   let folders = [];
   let newFolderName = '';
-  const darkMode = writable(false);
 
   $: if ($user) {
     loadFolders();
@@ -20,25 +20,6 @@
   function toggleDarkMode() {
     darkMode.update(value => !value);
   }
-
-  $: if (browser) {
-    $darkMode
-      ? document.body.classList.add('dark-mode')
-      : document.body.classList.remove('dark-mode');
-  }
-
-  onMount(() => {
-    if (browser) {
-      const savedMode = localStorage.getItem('darkMode');
-      if (savedMode) {
-        darkMode.set(savedMode === 'true');
-      }
-
-      darkMode.subscribe(value => {
-        localStorage.setItem('darkMode', value.toString());
-      });
-    }
-  });
 
   async function loadFolders() {
   isLoading = true;

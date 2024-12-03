@@ -3,15 +3,36 @@
   import Header from './Header.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
   import { getCurrentUser, user } from '$lib/auth';
-  import { sidebarVisible } from '$lib/stores/sidebarStore';
+  import { sidebarVisible, darkMode } from '$lib/stores/sidebarStore';
   import '../app.css';
+  import { browser } from '$app/environment';
 
   onMount(() => {
     getCurrentUser();
+    if (window.innerWidth <= 768) {
+        sidebarVisible.set(false);
+    }
+    
+    if (browser) {
+      const savedMode = localStorage.getItem('darkMode');
+      if (savedMode) {
+        darkMode.set(savedMode === 'true');
+      }
+
+      darkMode.subscribe(value => {
+        localStorage.setItem('darkMode', value.toString());
+      });
+    }
   });
 
   $: if ($user) {
     document.dispatchEvent(new Event('UserLoggedIn'));
+  }
+
+  $: if (browser) {
+    $darkMode
+      ? document.body.classList.add('dark-mode')
+      : document.body.classList.remove('dark-mode');
   }
 </script>
 
