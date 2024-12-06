@@ -6,12 +6,16 @@
     const handleSignOut = () => signOut();
     const toggleSidebar = () => sidebarVisible.update(v => !v);
     const startTutorial = () => {
-        // Ensure tutorial is initialized before starting
-        if (!window.tutorial) {
-            window.tutorial = new Tutorial();
-        }
-        window.tutorial.start(true); // Force start regardless of previous state
-    };
+    // Ensure sidebar is visible and menu is closed
+    sidebarVisible.set(true);
+    isMenuOpen = false;
+    
+    // Initialize and start tutorial
+    if (!window.tutorial) {
+        window.tutorial = new Tutorial();
+    }
+    window.tutorial.start(true);
+};
 
     let isMenuOpen = false;
     const toggleMenu = () => {
