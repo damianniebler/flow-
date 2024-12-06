@@ -785,11 +785,17 @@ textarea::-webkit-scrollbar {
     animation: shimmer 1.25s infinite;
   }
 
+  .folder-view.skeleton {
+    margin-top: 2rem;
+    padding: 0 2rem;
+}
+
   .skeleton-header {
     height: 40px;
     background: #f0f0f0;
     margin-bottom: 24px;
     border-radius: 4px;
+    margin-top: 2rem;
   }
 
   .skeleton-section {
@@ -858,7 +864,7 @@ textarea::-webkit-scrollbar {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	min-height: 100vh;
+	min-height: 80vh;
   }  
 
   .auth-links {
@@ -871,6 +877,25 @@ textarea::-webkit-scrollbar {
     width: 100%;
 }
 
+.auth-links a {
+  color: var(--text-color);
+  text-decoration: none;
+  font-weight: normal;
+  transition: color 0.2s ease;
+}
+
+.auth-links a:visited {
+  color: var(--text-color);
+}
+
+.auth-links a:hover {
+  opacity: 0.8;
+}
+
+.auth-links b {
+  color: var(--button-bg);
+  font-weight: bold;
+}
 
 .separator {
     color: var(--button-bg);
@@ -887,15 +912,24 @@ textarea::-webkit-scrollbar {
 }
 
 .login-card form {
-    margin-top: 1.5rem;
+  margin-top: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input-group {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
 }
 
 .login-card input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--section-bg);
-    border-radius: 6px;
-    margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--section-bg);
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  box-sizing: border-box;
 }
 
 .feedback-popup {
@@ -950,6 +984,15 @@ textarea::-webkit-scrollbar {
   
     aside.hidden {
       transform: translateX(-100%);
+    }
+
+    .login-card {
+      margin: 1rem;
+      width: calc(100% - 2rem);
+    }
+    
+    .login-container {
+      padding: 0;
     }
   
     .sticky-toggle {

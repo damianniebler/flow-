@@ -26,16 +26,16 @@
         </div>
 
         <form on:submit|preventDefault={handleSubmit}>
-            <div>
+            <div class="input-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" bind:value={email} required />
             </div>
-            <div>
+            <div class="input-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" bind:value={password} required />
             </div>
             <button class="button" type="submit">Login</button>
-        </form>
+        </form>        
 
         {#if error}
             <p class="error">{error}</p>
