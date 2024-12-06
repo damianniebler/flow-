@@ -694,6 +694,7 @@ highlightNewFolder(folderId) {
   
   endTutorial() {
     console.log('Ending tutorial');
+    this.removeHighlights();
     this.hideOverlay();
     this.currentStep = undefined; // Crucial: Reset currentStep
 
