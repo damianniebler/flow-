@@ -123,6 +123,30 @@
     }
   }
 
+  function handleContextMenu(event) {
+  if (selectedText) {
+    event.preventDefault();
+    showCreateItemOption = true;
+    buttonPosition = {
+      top: event.clientY + window.scrollY,
+      left: event.clientX
+    };
+  }
+}
+
+function handleTouchStart(event) {
+  if (event.target === textareaElement) {
+    isSelecting = true;
+  }
+}
+
+function handleTouchEnd(event) {
+  if (isSelecting) {
+    handleSelection(event);
+  }
+  isSelecting = false;
+}
+
   function handleCreateItemClick() {
     showPopup = true;
     showCreateItemOption = false;
@@ -152,17 +176,30 @@
     </div>
   </div>
 {:else}
-  <div class="notepad">
+that works with the current selection:
+<div class="notepad">
+  <div class="toolbar">
+    <button on:click={handleCreateItemClick} disabled={!selectedText}>
+      Create Item
+    </button>
+  </div>
     <textarea
-      bind:this={textareaElement}
-      bind:value={noteContent}
-      on:input={saveNote}
-      on:mousedown={handleMousedown}
-      on:keydown={(e) => handleSelection(e)}
-      placeholder="Start typing your notes here..."
-      rows="20"
-      cols="100"
-    ></textarea>
+    bind:this={textareaElement}
+    bind:value={noteContent}
+    on:input={saveNote}
+    on:mousedown={handleMousedown}
+    on:touchstart={handleTouchStart}
+    on:touchend={handleTouchEnd}
+    on:keydown={(e) => handleSelection(e)}
+    placeholder="Start typing your notes here..."
+    rows="20"
+    cols="100"
+  ></textarea>  
+  {#if selectedText}
+  <button class="fab" on:click={handleCreateItemClick}>
+    + Create Item
+  </button>
+{/if}
     {#if showCreateItemOption}
       <div
         class="create-item-option"
