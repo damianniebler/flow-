@@ -19,6 +19,7 @@
   let buttonPosition = { top: 0, left: 0 };
   let textareaElement = null;
   let isSelecting = false;
+  let longPressTimeout = null;
 
   let isLoading = true;
 
@@ -47,6 +48,33 @@
     isLoading = false;
   }
 
+
+  function handleTouchStart(event) {
+    longPressTimeout = setTimeout(() => {
+      if (textareaElement) {
+        const rect = textareaElement.getBoundingClientRect();
+          selectionStart = textareaElement.selectionStart;
+          selectionEnd = textareaElement.selectionEnd;
+          selectedText = noteContent.slice(selectionStart, selectionEnd).trim();
+        if (selectedText) {
+          showCreateItemOption = true;
+          buttonPosition = {
+            top: event.touches[0].clientY + window.scrollY + 20,
+            left: event.touches[0].clientX,
+          };
+        }
+      }
+    }, 500); // Adjust duration as needed
+  }
+
+  function handleTouchEnd() {
+    clearTimeout(longPressTimeout);
+    const createItemButton = document.querySelector('.create-item-option button');
+    if (!createItemButton || !createItemButton.contains(event.target)) {
+      showCreateItemOption = false;
+    }
+  }
+
   function handleMousedown(event) {
     if (event.target === textareaElement) {
       isSelecting = true;
@@ -73,12 +101,21 @@
   onMount(() => {
     if (browser) {
       document.addEventListener('mouseup', handleGlobalMouseup);
+      if ('ontouchstart' in window) {
+        // Add touch event listeners for mobile
+        textareaElement.addEventListener('touchstart', handleTouchStart);
+        textareaElement.addEventListener('touchend', handleTouchEnd);
+      }
     }
   });
 
   onDestroy(() => {
     if (browser) {
       document.removeEventListener('mouseup', handleGlobalMouseup);
+      if ('ontouchstart' in window) {
+        textareaElement.removeEventListener('touchstart', handleTouchStart);
+        textareaElement.removeEventListener('touchend', handleTouchEnd);
+      }
     }
   });
 
@@ -102,53 +139,26 @@
       selectedText = noteContent.slice(selectionStart, selectionEnd).trim();
 
       if (selectedText) {
-        if (event.type === 'mouseup') {
-          showCreateItemOption = true;
-          buttonPosition = {
-            top: event.clientY + window.scrollY + 20,
-            left: event.clientX,
-          };
-        } else if (
-          event.type === 'keydown' &&
-          event.altKey &&
-          event.key.toLowerCase() === 'c'
-        ) {
-          event.preventDefault();
-          showPopup = true;
-          showCreateItemOption = false;
-        }
+          if (event.type === 'mouseup') {
+            showCreateItemOption = true;
+            buttonPosition = {
+              top: event.clientY + window.scrollY + 20,
+              left: event.clientX,
+            };
+          } else if (
+            event.type === 'keydown' &&
+            event.altKey &&
+            event.key.toLowerCase() === 'c'
+          ) {
+            event.preventDefault();
+            showPopup = true;
+            showCreateItemOption = false;
+          }
       } else {
         showCreateItemOption = false;
       }
     }
   }
-
-  function handleContextMenu(event) {
-  if (selectedText) {
-    event.preventDefault();
-    showCreateItemOption = true;
-    buttonPosition = {
-      top: event.clientY + window.scrollY,
-      left: event.clientX
-    };
-  }
-}
-
-function handleTouchStart(event) {
-  if (event.target === textareaElement) {
-    isSelecting = true;
-  }
-}
-
-function handleTouchEnd(event) {
-  if (isSelecting) {
-    handleSelection(event);
-    window.getSelection().removeAllRanges();
-    textareaElement.blur();
-    isSelecting = false;
-  }
-}
-
 
   function handleCreateItemClick() {
     showPopup = true;
@@ -179,30 +189,17 @@ function handleTouchEnd(event) {
     </div>
   </div>
 {:else}
-that works with the current selection:
-<div class="notepad">
-  <div class="toolbar">
-    <button on:click={handleCreateItemClick} disabled={!selectedText}>
-      Create Item
-    </button>
-  </div>
+  <div class="notepad">
     <textarea
-    bind:this={textareaElement}
-    bind:value={noteContent}
-    on:input={saveNote}
-    on:mousedown={handleMousedown}
-    on:touchstart={handleTouchStart}
-    on:touchend={handleTouchEnd}
-    on:keydown={(e) => handleSelection(e)}
-    placeholder="Start typing your notes here..."
-    rows="20"
-    cols="100"
-  ></textarea>  
-  {#if selectedText}
-  <button class="fab" on:click={handleCreateItemClick}>
-    + Create Item
-  </button>
-{/if}
+      bind:this={textareaElement}
+      bind:value={noteContent}
+      on:input={saveNote}
+      on:mousedown={handleMousedown}
+      on:keydown={(e) => handleSelection(e)}
+      placeholder="Start typing your notes here..."
+      rows="20"
+      cols="100"
+    ></textarea>
     {#if showCreateItemOption}
       <div
         class="create-item-option"
