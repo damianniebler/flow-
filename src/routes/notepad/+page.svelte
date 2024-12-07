@@ -144,9 +144,11 @@ function handleTouchEnd(event) {
   if (isSelecting) {
     handleSelection(event);
     window.getSelection().removeAllRanges();
+    textareaElement.blur();
     isSelecting = false;
   }
 }
+
 
   function handleCreateItemClick() {
     showPopup = true;
