@@ -143,8 +143,9 @@ function handleTouchStart(event) {
 function handleTouchEnd(event) {
   if (isSelecting) {
     handleSelection(event);
+    window.getSelection().removeAllRanges();
+    isSelecting = false;
   }
-  isSelecting = false;
 }
 
   function handleCreateItemClick() {
