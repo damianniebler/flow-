@@ -194,30 +194,30 @@
   }
 
   function handleSelectionChange() {
-    if (selectionChangeTimeout) {
-      clearTimeout(selectionChangeTimeout);
-    }
+  if (selectionChangeTimeout) {
+    clearTimeout(selectionChangeTimeout);
+  }
 
-    selectionChangeTimeout = setTimeout(() => {
-      if (textareaElement && document.activeElement === textareaElement) {
-        const selection = noteContent.slice(
-          textareaElement.selectionStart, 
-          textareaElement.selectionEnd
-        ).trim();
+  selectionChangeTimeout = setTimeout(() => {
+    if (textareaElement && document.activeElement === textareaElement) {
+      const selection = noteContent.slice(
+        textareaElement.selectionStart, 
+        textareaElement.selectionEnd
+      ).trim();
 
-        if (selection) {
-          const coords = getSelectionCoordinates();
-          if (coords) {
-            showCreateItemOption = true;
-            buttonPosition = {
-              top: coords.top + window.scrollY + 20,
-              left: coords.left
-            };
-          }
+      if (selection) {
+        const coords = getSelectionCoordinates();
+        if (coords) {
+          showCreateItemOption = true;
+          buttonPosition = {
+            top: coords.top + window.scrollY + 40,
+            left: coords.left
+          };
         }
       }
-    }, 100);
-  }
+    }
+  }, 100);
+}
 
   function handleCreateItemClick() {
     showPopup = true;
