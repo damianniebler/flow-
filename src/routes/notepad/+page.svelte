@@ -22,6 +22,7 @@
   let touchStartY = 0;
   let touchStartX = 0;
   let selectionChangeTimeout;
+  let mirrorDiv;
 
   let isLoading = true;
 
@@ -135,6 +136,35 @@
     }
   }, 1000);
 
+
+  function getSelectionCoordinates() {
+    if (!mirrorDiv) return null;
+
+    // Copy textarea styles to mirror
+    const textareaStyle = window.getComputedStyle(textareaElement);
+    mirrorDiv.style.width = textareaStyle.width;
+    mirrorDiv.style.font = textareaStyle.font;
+    mirrorDiv.style.padding = textareaStyle.padding;
+    mirrorDiv.style.lineHeight = textareaStyle.lineHeight;
+
+    // Create content up to selection
+    const textBeforeSelection = noteContent.substring(0, textareaElement.selectionStart);
+    const selectedText = noteContent.substring(textareaElement.selectionStart, textareaElement.selectionEnd);
+    
+    // Set mirror content
+    mirrorDiv.textContent = textBeforeSelection;
+    const span = document.createElement('span');
+    span.textContent = selectedText;
+    mirrorDiv.appendChild(span);
+
+    // Get position
+    const spanRect = span.getBoundingClientRect();
+    return {
+      top: spanRect.bottom,
+      left: spanRect.left + (spanRect.width / 2)
+    };
+  }
+
   function handleSelection(event) {
     if (textareaElement) {
       selectionStart = textareaElement.selectionStart;
@@ -163,14 +193,11 @@
     }
   }
 
-    // Add new selection change handler
-    function handleSelectionChange() {
-    // Clear any existing timeout
+  function handleSelectionChange() {
     if (selectionChangeTimeout) {
       clearTimeout(selectionChangeTimeout);
     }
 
-    // Set a small timeout to let the selection stabilize
     selectionChangeTimeout = setTimeout(() => {
       if (textareaElement && document.activeElement === textareaElement) {
         const selection = noteContent.slice(
@@ -179,15 +206,14 @@
         ).trim();
 
         if (selection) {
-          // Get the selection coordinates
-          const range = window.getSelection().getRangeAt(0);
-          const rect = range.getBoundingClientRect();
-          
-          showCreateItemOption = true;
-          buttonPosition = {
-            top: rect.bottom + window.scrollY + 20,
-            left: rect.left + (rect.width / 2),
-          };
+          const coords = getSelectionCoordinates();
+          if (coords) {
+            showCreateItemOption = true;
+            buttonPosition = {
+              top: coords.top + window.scrollY + 20,
+              left: coords.left
+            };
+          }
         }
       }
     }, 100);
@@ -211,6 +237,11 @@
     }
   }
 </script>
+
+<div 
+  bind:this={mirrorDiv} 
+  style="position: absolute; visibility: hidden; white-space: pre-wrap; word-wrap: break-word;"
+></div>
 
 {#if isLoading}
   <div class="folder-view skeleton">
