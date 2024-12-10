@@ -21,6 +21,7 @@
   let isSelecting = false;
   let touchStartY = 0;
   let touchStartX = 0;
+  let selectionChangeTimeout;
 
   let isLoading = true;
 
@@ -68,12 +69,14 @@
 
     if (isSelecting && textareaElement) {
       if (event.type === 'touchend') {
-        event.preventDefault();
         const touch = event.changedTouches[0];
-        handleSelection({
-          clientX: touch.clientX,
-          clientY: touch.clientY,
-          type: 'mouseup' // We use mouseup type to reuse existing logic
+        // Use requestAnimationFrame to wait for selection to be ready
+        requestAnimationFrame(() => {
+          handleSelection({
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            type: 'mouseup'
+          });
         });
       } else {
         handleSelection(event);
@@ -103,7 +106,8 @@
   onMount(() => {
     if (browser) {
       document.addEventListener('mouseup', handleInteractionEnd);
-      document.addEventListener('touchend', handleInteractionEnd, { passive: false });
+      document.addEventListener('touchend', handleInteractionEnd);
+      document.addEventListener('selectionchange', handleSelectionChange);
     }
   });
 
@@ -111,6 +115,10 @@
     if (browser) {
       document.removeEventListener('mouseup', handleInteractionEnd);
       document.removeEventListener('touchend', handleInteractionEnd);
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      if (selectionChangeTimeout) {
+        clearTimeout(selectionChangeTimeout);
+      }
     }
   });
 
@@ -153,6 +161,36 @@
         showCreateItemOption = false;
       }
     }
+  }
+
+    // Add new selection change handler
+    function handleSelectionChange() {
+    // Clear any existing timeout
+    if (selectionChangeTimeout) {
+      clearTimeout(selectionChangeTimeout);
+    }
+
+    // Set a small timeout to let the selection stabilize
+    selectionChangeTimeout = setTimeout(() => {
+      if (textareaElement && document.activeElement === textareaElement) {
+        const selection = noteContent.slice(
+          textareaElement.selectionStart, 
+          textareaElement.selectionEnd
+        ).trim();
+
+        if (selection) {
+          // Get the selection coordinates
+          const range = window.getSelection().getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          
+          showCreateItemOption = true;
+          buttonPosition = {
+            top: rect.bottom + window.scrollY + 20,
+            left: rect.left + (rect.width / 2),
+          };
+        }
+      }
+    }, 100);
   }
 
   function handleCreateItemClick() {
