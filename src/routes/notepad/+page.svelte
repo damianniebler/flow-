@@ -204,22 +204,21 @@
 
   selectionChangeTimeout = setTimeout(() => {
     if (textareaElement && document.activeElement === textareaElement) {
-      const selection = noteContent.slice(
+      // Update selectedText here to ensure we have the latest selection
+      selectedText = noteContent.slice(
         textareaElement.selectionStart, 
         textareaElement.selectionEnd
       ).trim();
 
-      if (selection) {
+      if (selectedText) {
         if (isMobileDevice()) {
-          // Position above textarea for mobile
           const textareaRect = textareaElement.getBoundingClientRect();
           showCreateItemOption = true;
           buttonPosition = {
-            top: textareaRect.top - 50, // Position above textarea
-            left: textareaRect.left + (textareaRect.width / 2), // Center horizontally
+            top: textareaRect.top - 50,
+            left: textareaRect.left + (textareaRect.width / 2),
           };
         } else {
-          // Keep existing desktop positioning
           const coords = getSelectionCoordinates();
           if (coords) {
             showCreateItemOption = true;
@@ -233,6 +232,7 @@
     }
   }, 100);
 }
+
 
   function handleCreateItemClick() {
     showPopup = true;
