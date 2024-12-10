@@ -204,7 +204,6 @@
 
   selectionChangeTimeout = setTimeout(() => {
     if (textareaElement && document.activeElement === textareaElement) {
-      // Update selectedText here to ensure we have the latest selection
       selectedText = noteContent.slice(
         textareaElement.selectionStart, 
         textareaElement.selectionEnd
@@ -212,6 +211,7 @@
 
       if (selectedText) {
         if (isMobileDevice()) {
+          // Keep existing mobile behavior
           const textareaRect = textareaElement.getBoundingClientRect();
           showCreateItemOption = true;
           buttonPosition = {
@@ -219,19 +219,23 @@
             left: textareaRect.left + (textareaRect.width / 2),
           };
         } else {
-          const coords = getSelectionCoordinates();
-          if (coords) {
-            showCreateItemOption = true;
-            buttonPosition = {
-              top: coords.top + window.scrollY + 20,
-              left: coords.left
-            };
+          // Only show on desktop if user isn't actively selecting
+          if (!isSelecting) {
+            const coords = getSelectionCoordinates();
+            if (coords) {
+              showCreateItemOption = true;
+              buttonPosition = {
+                top: coords.top + window.scrollY + 20,
+                left: coords.left
+              };
+            }
           }
         }
       }
     }
-  }, 100);
+  }, 50); // Increased from 100ms to 250ms for more stability
 }
+
 
 
   function handleCreateItemClick() {
