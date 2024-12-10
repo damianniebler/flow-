@@ -51,6 +51,10 @@
     isLoading = false;
   }
 
+  function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
   function handleInteractionStart(event) {
     if (event.type === 'touchstart') {
       const touch = event.touches[0];
@@ -206,13 +210,24 @@
       ).trim();
 
       if (selection) {
-        const coords = getSelectionCoordinates();
-        if (coords) {
+        if (isMobileDevice()) {
+          // Position above textarea for mobile
+          const textareaRect = textareaElement.getBoundingClientRect();
           showCreateItemOption = true;
           buttonPosition = {
-            top: coords.top + window.scrollY + 40,
-            left: coords.left
+            top: textareaRect.top - 50, // Position above textarea
+            left: textareaRect.left + (textareaRect.width / 2), // Center horizontally
           };
+        } else {
+          // Keep existing desktop positioning
+          const coords = getSelectionCoordinates();
+          if (coords) {
+            showCreateItemOption = true;
+            buttonPosition = {
+              top: coords.top + window.scrollY + 20,
+              left: coords.left
+            };
+          }
         }
       }
     }
