@@ -19,7 +19,8 @@
   let buttonPosition = { top: 0, left: 0 };
   let textareaElement = null;
   let isSelecting = false;
-  let longPressTimeout = null;
+  let touchStartY = 0;
+  let touchStartX = 0;
 
   let isLoading = true;
 
@@ -48,37 +49,38 @@
     isLoading = false;
   }
 
-
-  function handleTouchStart(event) {
-    longPressTimeout = setTimeout(() => {
-      if (textareaElement) {
-        const rect = textareaElement.getBoundingClientRect();
-          selectionStart = textareaElement.selectionStart;
-          selectionEnd = textareaElement.selectionEnd;
-          selectedText = noteContent.slice(selectionStart, selectionEnd).trim();
-        if (selectedText) {
-          showCreateItemOption = true;
-          buttonPosition = {
-            top: event.touches[0].clientY + window.scrollY + 20,
-            left: event.touches[0].clientX,
-          };
-        }
-      }
-    }, 500); // Adjust duration as needed
-  }
-
-  function handleTouchEnd() {
-    clearTimeout(longPressTimeout);
-    const createItemButton = document.querySelector('.create-item-option button');
-    if (!createItemButton || !createItemButton.contains(event.target)) {
-      showCreateItemOption = false;
+  function handleInteractionStart(event) {
+    if (event.type === 'touchstart') {
+      const touch = event.touches[0];
+      touchStartY = touch.clientY;
+      touchStartX = touch.clientX;
     }
-  }
-
-  function handleMousedown(event) {
     if (event.target === textareaElement) {
       isSelecting = true;
     }
+  }
+
+  function handleInteractionEnd(event) {
+    const createItemButton = event.target?.closest?.('.create-item-option');
+    if (!createItemButton) {
+      showCreateItemOption = false;
+    }
+
+    if (isSelecting && textareaElement) {
+      if (event.type === 'touchend') {
+        event.preventDefault();
+        const touch = event.changedTouches[0];
+        handleSelection({
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          type: 'mouseup' // We use mouseup type to reuse existing logic
+        });
+      } else {
+        handleSelection(event);
+      }
+    }
+
+    isSelecting = false;
   }
 
   function handleGlobalMouseup(event) {
@@ -100,22 +102,15 @@
 
   onMount(() => {
     if (browser) {
-      document.addEventListener('mouseup', handleGlobalMouseup);
-      if ('ontouchstart' in window) {
-        // Add touch event listeners for mobile
-        textareaElement.addEventListener('touchstart', handleTouchStart);
-        textareaElement.addEventListener('touchend', handleTouchEnd);
-      }
+      document.addEventListener('mouseup', handleInteractionEnd);
+      document.addEventListener('touchend', handleInteractionEnd, { passive: false });
     }
   });
 
   onDestroy(() => {
     if (browser) {
-      document.removeEventListener('mouseup', handleGlobalMouseup);
-      if ('ontouchstart' in window) {
-        textareaElement.removeEventListener('touchstart', handleTouchStart);
-        textareaElement.removeEventListener('touchend', handleTouchEnd);
-      }
+      document.removeEventListener('mouseup', handleInteractionEnd);
+      document.removeEventListener('touchend', handleInteractionEnd);
     }
   });
 
@@ -139,21 +134,21 @@
       selectedText = noteContent.slice(selectionStart, selectionEnd).trim();
 
       if (selectedText) {
-          if (event.type === 'mouseup') {
-            showCreateItemOption = true;
-            buttonPosition = {
-              top: event.clientY + window.scrollY + 20,
-              left: event.clientX,
-            };
-          } else if (
-            event.type === 'keydown' &&
-            event.altKey &&
-            event.key.toLowerCase() === 'c'
-          ) {
-            event.preventDefault();
-            showPopup = true;
-            showCreateItemOption = false;
-          }
+        if (event.type === 'mouseup') {
+          showCreateItemOption = true;
+          buttonPosition = {
+            top: event.clientY + window.scrollY + 20,
+            left: event.clientX,
+          };
+        } else if (
+          event.type === 'keydown' &&
+          event.altKey &&
+          event.key.toLowerCase() === 'c'
+        ) {
+          event.preventDefault();
+          showPopup = true;
+          showCreateItemOption = false;
+        }
       } else {
         showCreateItemOption = false;
       }
@@ -191,15 +186,16 @@
 {:else}
   <div class="notepad">
     <textarea
-      bind:this={textareaElement}
-      bind:value={noteContent}
-      on:input={saveNote}
-      on:mousedown={handleMousedown}
-      on:keydown={(e) => handleSelection(e)}
-      placeholder="Start typing your notes here..."
-      rows="20"
-      cols="100"
-    ></textarea>
+    bind:this={textareaElement}
+    bind:value={noteContent}
+    on:input={saveNote}
+    on:mousedown={handleInteractionStart}
+    on:touchstart={handleInteractionStart}
+    on:keydown={(e) => handleSelection(e)}
+    placeholder="Start typing your notes here..."
+    rows="20"
+    cols="100"
+  ></textarea>
     {#if showCreateItemOption}
       <div
         class="create-item-option"
