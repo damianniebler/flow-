@@ -462,11 +462,11 @@ async function createEntity(sectionId, entityName) {
           <div class="section-actions">
             <button class="btn-icon-move" on:click={() => moveSection(section, 'up')} disabled={sections.indexOf(section) === 0}>
               <span class="desktop-arrow">⮝</span>
-              <span class="mobile-arrow">↑</span>
+              <span class="mobile-arrow">▲</span>
             </button>
             <button class="btn-icon-move" on:click={() => moveSection(section, 'down')} disabled={sections.indexOf(section) === sections.length - 1}>
               <span class="desktop-arrow">⮟</span>
-              <span class="mobile-arrow">↓</span>
+              <span class="mobile-arrow">▼</span>
             </button>
             <button class="btn-icon" on:click={() => renameSection(section)}>✏️</button>
             <button class="btn-icon" on:click={() => deleteSection(section)}>🗑️</button>
