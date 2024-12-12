@@ -254,10 +254,13 @@
   }
   
   .notepad {
-	width: 100%;
-	height: 90vh;
-	padding: 20px;
-	position: relative;
+    width: 100%;
+    height: 100vh;
+    padding: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 	textarea {
 		background-color: var(--section-bg);
 	}
@@ -272,6 +275,7 @@
 	padding: 10px;
 	font-size: 16px;
 	line-height: 1.5;
+  resize: none;
   }
 
   /* Custom scrollbar styling */
@@ -1018,6 +1022,25 @@ textarea::-webkit-scrollbar {
   
     .logo {
       margin-left: 0;
+    }
+
+    .create-item-option {
+      padding: 0px;
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+    }
+  
+    .create-item-option button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background-color: var(--button-bg);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      text-align: center;
     }
 
       .tutorial-content {

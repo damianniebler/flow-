@@ -211,7 +211,6 @@
 
       if (selectedText) {
         if (isMobileDevice()) {
-          // Keep existing mobile behavior
           const textareaRect = textareaElement.getBoundingClientRect();
           showCreateItemOption = true;
           buttonPosition = {
@@ -219,7 +218,6 @@
             left: textareaRect.left + (textareaRect.width / 2),
           };
         } else {
-          // Only show on desktop if user isn't actively selecting
           if (!isSelecting) {
             const coords = getSelectionCoordinates();
             if (coords) {
@@ -233,10 +231,8 @@
         }
       }
     }
-  }, 50); // Increased from 100ms to 250ms for more stability
+  }, 50);
 }
-
-
 
   function handleCreateItemClick() {
     showPopup = true;
