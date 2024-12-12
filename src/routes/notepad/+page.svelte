@@ -211,11 +211,10 @@
 
       if (selectedText) {
         if (isMobileDevice()) {
-          const textareaRect = textareaElement.getBoundingClientRect();
           showCreateItemOption = true;
           buttonPosition = {
-            top: textareaRect.top - 50,
-            left: textareaRect.left + (textareaRect.width / 2),
+            top: 80,
+            left: 50,
           };
         } else {
           if (!isSelecting) {
@@ -233,6 +232,7 @@
     }
   }, 50);
 }
+
 
   function handleCreateItemClick() {
     showPopup = true;
