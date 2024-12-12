@@ -296,7 +296,10 @@ function handleOptionClick(action) {
 {:else}
 <div class="entity-page">
   <div class="entity-header">
-    <button class="back-button" on:click={goBackToFolder}>🠈</button>
+    <button class="back-button" on:click={goBackToFolder}>
+      <span class="desktop-arrow">🠈</span>
+      <span class="mobile-arrow">←</span>
+    </button>    
     <h1>{entity ? entity.name : 'Loading...'}</h1>
   </div>
 
