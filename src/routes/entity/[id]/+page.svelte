@@ -218,35 +218,44 @@
   }
 }
 
-  function truncateNote(note) {
-    return note ? (note.length > 90 ? note.slice(0, 90) + '...' : note) : '';
-  }
+function truncateNote(note) {
+    return note ? (note.length > 120 ? note.slice(0, 120) + '...' : note) : '';
+}
 
-  function parseNoteWithLinks(note) {
+function parseNoteWithLinks(note) {
   if (!note) return { text: '', hasLinks: false };
 
+  // Extract all links from the original note first
   const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const matches = note.matchAll(urlRegex);
-  const links = Array.from(matches, m => m[0]);
-  const hasLinks = links.length > 0;
+  const fullLinks = Array.from(note.matchAll(urlRegex), m => m[0]);
+  
+  // Then truncate the note
+  const truncatedNote = truncateNote(note);
+  const matches = truncatedNote.matchAll(urlRegex);
+  const hasLinks = fullLinks.length > 0;
 
-  if (!hasLinks) return { text: note, hasLinks: false };
+  if (!hasLinks) return { text: truncatedNote, hasLinks: false };
 
   let parts = [];
   let lastIndex = 0;
-  for (const match of note.matchAll(urlRegex)) {
-    parts.push(note.substring(lastIndex, match.index));
-    parts.push(match[0]);
+  let linkIndex = 0;
+  
+  for (const match of truncatedNote.matchAll(urlRegex)) {
+    parts.push(truncatedNote.substring(lastIndex, match.index));
+    // Store the display text and the full link
+    parts.push({ display: match[0], fullLink: fullLinks[linkIndex] });
     lastIndex = match.index + match[0].length;
+    linkIndex++;
   }
-  parts.push(note.substring(lastIndex));
+  parts.push(truncatedNote.substring(lastIndex));
 
   return {
     parts: parts,
-    links: links,
+    fullLinks: fullLinks,
     hasLinks: true
   };
 }
+
 
 let showPopup = false;
 let popupItem = null;
@@ -255,13 +264,15 @@ let popupLink = '';
 
 function showOptionsPopup(item, rect) {
   popupItem = item;
-  popupLink = parseNoteWithLinks(item.note).links[0];
+  const parsed = parseNoteWithLinks(item.note);
+  popupLink = parsed.fullLinks[0]; // Use the full link
   popupPosition = {
     top: rect.bottom + window.scrollY + 5,
     left: rect.left + window.scrollX
   };
   showPopup = true;
 }
+
 
 function handleOptionClick(action) {
   if (action === 'open') {
@@ -344,13 +355,13 @@ function handleOptionClick(action) {
 {#if item.note}
   {@const parsed = parseNoteWithLinks(item.note)}
   {#if parsed.hasLinks}
-    {#each parsed.parts as part}
-      {#if parsed.links.includes(part)}
-        <a href={part} class="note-link">{part}</a>
-      {:else}
-        <span>{truncateNote(part)}</span>
-      {/if}
-    {/each}
+  {#each parsed.parts as part}
+  {#if typeof part === 'object'}
+    <a href={part.fullLink} class="note-link">{part.display}</a>
+  {:else}
+    <span>{part}</span>
+  {/if}
+{/each}
   {:else}
     {truncateNote(item.note)}
   {/if}

@@ -228,6 +228,51 @@ class Tutorial {
     this.currentStep = 0;
     this.tutorialContent = null;
     this.currentStepSet = [this.initialStep];
+
+    document.addEventListener('click', (e) => {
+      const overlay = document.getElementById('overlay');
+      // Check if tutorial is active by verifying overlay is visible
+      if (overlay && !overlay.classList.contains('hidden')) {
+        const isOverlay = e.target.closest('.tutorial-content') || 
+                         e.target.closest('.tutorial-close-button') ||
+                         e.target.closest('.tutorial-dont-show');
+        
+        const isHighlighted = e.target.classList.contains('highlight') || 
+                             e.target.closest('.highlight');
+  
+        if (!isOverlay && !isHighlighted) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          let message = document.getElementById('tutorial-warning');
+          if (!message) {
+            message = document.createElement('div');
+            message.id = 'tutorial-warning';
+            message.style.cssText = `
+              position: fixed;
+              top: 20px;
+              left: 50%;
+              transform: translateX(-50%);
+              background: #ff6b6b;
+              color: white;
+              padding: 10px 20px;
+              border-radius: 5px;
+              z-index: 10000;
+              animation: fadeIn 0.3s ease-in-out;
+            `;
+            document.body.appendChild(message);
+          }
+          
+          message.textContent = "Please follow the tutorial or end the tutorial!";
+          
+          setTimeout(() => {
+            message.remove();
+          }, 2000);
+          
+          return false;
+        }
+      }
+    }, true);
   }
 
   handleOptionSelection(option) {
@@ -723,5 +768,3 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   });
 });
-
-
