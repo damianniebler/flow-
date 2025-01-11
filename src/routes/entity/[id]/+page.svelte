@@ -400,20 +400,20 @@ function handleOptionClick(action) {
           }
         }}>
 {#if item.note}
-  {@const parsed = parseNoteWithLinks(item.note)}
-  {#if parsed.hasLinks}
-    {#each parsed.parts as part}
-      {#if parsed.links.includes(part)}
-        <a href={part} class="note-link">{part}</a>
-      {:else}
-        <span>{truncateNote(part)}</span>
-      {/if}
-    {/each}
-  {:else}
-    {truncateNote(item.note)}
-  {/if}
+{@const parsed = parseNoteWithLinks(item.note)}
+{#if parsed.hasLinks}
+  {#each parsed.parts as part}
+    {#if typeof part === 'object'}
+      <a href={part.fullLink} class="note-link">{part.display}</a>
+    {:else}
+      <span>{part}</span>
+    {/if}
+  {/each}
 {:else}
-  Click to add a note
+  {truncateNote(item.note)}
+{/if}
+{:else}
+Click to add a note
 {/if}
         </div>
       </li>
