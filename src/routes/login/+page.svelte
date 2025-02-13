@@ -1,11 +1,13 @@
 <script>
     import { signIn } from '$lib/auth';
+    import { page } from '$app/stores';
     import { goto } from '$app/navigation';
     import '../../app.css';
 
     let email = '';
     let password = '';
     let error = null;
+    $: showWelcomeMessage = $page.url.searchParams.get('newAccount') === 'true';
 
     async function handleSubmit() {
         try {
@@ -19,6 +21,11 @@
 <div class="login-container">
     <div class="login-card">
         <div class="logo">Flowscend</div>
+        {#if showWelcomeMessage}
+        <div class="success-message">
+            Thanks for making your account! You can now login with your email and password from the previous screen.
+        </div>
+        {/if}
         <div class="auth-links">
             <b>Login</b>
             <span class="separator">|</span>

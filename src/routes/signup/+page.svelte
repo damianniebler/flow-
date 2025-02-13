@@ -11,7 +11,7 @@
     async function handleSubmit() {
         try {
             await signUp(email, password, firstName);
-            goto('/login');
+            goto('/login?newAccount=true');
         } catch (e) {
             error = e.message;
         }
