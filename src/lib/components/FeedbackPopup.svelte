@@ -1,5 +1,6 @@
 <script>
     import { supabase } from '../../supabase';
+    import { user } from '$lib/auth';
     
     export let showFeedback;
     let feedbackText = '';
@@ -8,7 +9,10 @@
       if (feedbackText.trim()) {
         const { error } = await supabase
           .from('feedback')
-          .insert({ feedback_text: feedbackText });
+          .insert({ 
+            feedback_text: feedbackText,
+            email: $user.email
+          });
           
         if (!error) {
           feedbackText = '';
@@ -16,7 +20,7 @@
         }
       }
     }
-  </script>
+</script>
   
   <div class="feedback-popup">
     <div class="feedback-content">
