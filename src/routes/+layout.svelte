@@ -6,6 +6,7 @@
   import { sidebarVisible, darkMode } from '$lib/stores/sidebarStore';
   import '../app.css';
   import { browser } from '$app/environment';
+  import { page } from '$app/stores';
 
   onMount(() => {
     getCurrentUser();
@@ -22,6 +23,12 @@
       darkMode.subscribe(value => {
         localStorage.setItem('darkMode', value.toString());
       });
+
+      if (!$page.url.pathname.includes('reset-password')) {
+        const script = document.createElement('script');
+        script.src = '/tutorial.js';
+        document.body.appendChild(script);
+      }
     }
   });
 
