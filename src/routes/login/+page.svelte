@@ -37,12 +37,12 @@
                 <label for="email">Email</label>
                 <input type="email" id="email" bind:value={email} required />
             </div>
-            <div class="forgot-password">
-                <a href="/forgot-password">Forgot Password</a>
-            </div>
             <div class="input-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" bind:value={password} required />
+            </div>
+            <div class="forgot-password">
+                <a href="/forgot-password">Forgot Password</a>
             </div>
             <button class="button" type="submit">Login</button>
         </form>        

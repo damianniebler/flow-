@@ -32,26 +32,25 @@
     });
 
     async function handleSubmit() {
-        if (newPassword !== confirmPassword) {
-            error = "Passwords don't match";
-            return;
-        }
-
-        try {
-            const { data, error: updateError } = await supabase.auth.updateUser({
-                password: newPassword
-            });
-
-            if (updateError) throw updateError;
-
-            success = true;
-            setTimeout(() => {
-                goto('/');
-            }, 3000);
-        } catch (e) {
-            error = e.message;
-        }
+    if (newPassword !== confirmPassword) {
+        error = "Passwords don't match";
+        return;
     }
+
+    try {
+        const { data, error: updateError } = await supabase.auth.updateUser({
+            password: newPassword
+        });
+
+        if (updateError) throw updateError;
+        success = true;
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 3000);
+    } catch (e) {
+        error = e.message;
+    }
+}
 </script>
 
 <div class="login-container">
@@ -72,7 +71,7 @@
             </form>
         {:else}
             <div class="success-message">
-                Password updated successfully!
+                Password updated successfully! We're redirecting you, one moment...
             </div>
         {/if}
 
