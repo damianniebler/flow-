@@ -10,19 +10,24 @@
     let success = false;
 
     onMount(async () => {
+        // Parse the hash fragment from the URL
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
+
+        const type = params.get('type');                // often "recovery"
+        const accessToken = params.get('access_token'); // JWT token
         const refreshToken = params.get('refresh_token');
 
-        if (accessToken && refreshToken) {
+        // Only attempt to set the session if we have both tokens 
+        // and the type is "recovery"
+        if (type === 'recovery' && accessToken && refreshToken) {
             const { data, error: sessionError } = await supabase.auth.setSession({
                 access_token: accessToken,
                 refresh_token: refreshToken
             });
 
             if (sessionError) {
-                console.log('Session set error:', sessionError);
+                console.error('Error setting session:', sessionError);
             } else {
                 console.log('Session set successfully:', data);
             }
@@ -36,6 +41,7 @@
         }
 
         try {
+            // Attempt to update the user’s password now that we have a session
             const { data, error: updateError } = await supabase.auth.updateUser({
                 password: newPassword
             });
