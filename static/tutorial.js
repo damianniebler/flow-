@@ -297,7 +297,7 @@ class Tutorial {
       this.currentStep = 0;
       this.prefillInput();
       this.showStep();
-    }, 300);
+    }, 2000);
   }
 
 start(forceStart = false) {
