@@ -276,7 +276,6 @@ class Tutorial {
   }
 
   handleOptionSelection(option) {
-    window.sidebarVisible.set(true);
     switch(option) {
       case "Work/Professional":
         this.currentStepSet = this.workSteps;
