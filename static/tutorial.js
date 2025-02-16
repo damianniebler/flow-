@@ -293,9 +293,11 @@ class Tutorial {
   
     document.dispatchEvent(new CustomEvent('SidebarShowRequest'));
     
-    this.currentStep = 0;
-    this.prefillInput();
-    this.showStep();
+    setTimeout(() => {
+      this.currentStep = 0;
+      this.prefillInput();
+      this.showStep();
+    }, 300);
   }
 
 start(forceStart = false) {
