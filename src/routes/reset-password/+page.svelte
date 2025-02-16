@@ -10,17 +10,19 @@
     let success = false;
 
     onMount(async () => {
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        
-        if (accessToken) {
-            const { data, error } = await supabase.auth.setSession({
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+            const { data, error: sessionError } = await supabase.auth.setSession({
                 access_token: accessToken,
-                refresh_token: null
+                refresh_token: refreshToken
             });
-            
-            if (error) {
-                console.log('Session error:', error);
+
+            if (sessionError) {
+                console.log('Session set error:', sessionError);
             } else {
                 console.log('Session set successfully:', data);
             }
