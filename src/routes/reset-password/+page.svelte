@@ -10,16 +10,13 @@
     let success = false;
 
     onMount(async () => {
-        // Parse the hash fragment from the URL
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
 
-        const type = params.get('type');                // often "recovery"
-        const accessToken = params.get('access_token'); // JWT token
+        const type = params.get('type');
+        const accessToken = params.get('access_token');
         const refreshToken = params.get('refresh_token');
 
-        // Only attempt to set the session if we have both tokens 
-        // and the type is "recovery"
         if (type === 'recovery' && accessToken && refreshToken) {
             const { data, error: sessionError } = await supabase.auth.setSession({
                 access_token: accessToken,
@@ -41,7 +38,6 @@
         }
 
         try {
-            // Attempt to update the user’s password now that we have a session
             const { data, error: updateError } = await supabase.auth.updateUser({
                 password: newPassword
             });
@@ -50,7 +46,7 @@
 
             success = true;
             setTimeout(() => {
-                goto('/login');
+                goto('/');
             }, 3000);
         } catch (e) {
             error = e.message;
@@ -76,7 +72,7 @@
             </form>
         {:else}
             <div class="success-message">
-                Password updated successfully! Redirecting to login...
+                Password updated successfully!
             </div>
         {/if}
 
