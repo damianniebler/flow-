@@ -301,6 +301,7 @@ start(forceStart = false) {
 
     if (forceStart || (!tutorialCompleted && !tutorialDismissed)) {
         console.log('Starting tutorial');
+        window.sidebarVisible.set(true);
         this.currentStep = 0;
         this.currentStepSet = [this.initialStep];
         this.showOverlay();
