@@ -13,6 +13,12 @@
     if (window.innerWidth <= 768) {
         sidebarVisible.set(false);
     }
+
+    document.addEventListener('SidebarShowRequest', () => {
+      if (window.innerWidth <= 768) {
+        sidebarVisible.set(true);
+      }
+    });
     
     if (browser) {
       const savedMode = localStorage.getItem('darkMode');

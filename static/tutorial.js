@@ -290,6 +290,9 @@ class Tutorial {
         this.currentStepSet = this.artSteps;
         break;
     }
+  
+    document.dispatchEvent(new CustomEvent('SidebarShowRequest'));
+    
     this.currentStep = 0;
     this.prefillInput();
     this.showStep();
