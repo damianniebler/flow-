@@ -46,7 +46,7 @@
         success = true;
         setTimeout(() => {
             window.location.href = '/';
-        }, 3000);
+        }, 1500);
     } catch (e) {
         error = e.message;
     }

@@ -33,7 +33,7 @@
             </form>
         {:else}
             <div class="success-message">
-                Check your email for a password reset link!
+                Happens to the best of us - check your email for a password reset link!
             </div>
         {/if}
 
