@@ -6,6 +6,7 @@
   import '../../../app.css';
   import LinkOptionsPopup from '$lib/components/LinkOptionsPopup.svelte';
   import { browser } from '$app/environment';
+  import { slide } from 'svelte/transition';
 
   let entity = null;
   let items = [];
@@ -420,16 +421,19 @@ Click to add a note
     {/each}
   </ul>  
 
-  {#if showNoteSidebar}
-  <div class="note-sidebar">
-    <h2>Note</h2>
+<div class="note-sidebar" class:open={showNoteSidebar}>
+  {#if selectedItem}
+    <h2>{selectedItem.name}</h2>
+    <h3>Note</h3>
     <textarea id="note-area" bind:value={selectedItem.note} on:keydown={handleKeydown}></textarea>
     <div class="note-sidebar-buttons">
       <button id="save-note" class="button" on:click={updateItemNote}>Save Note</button>
       <button class="second-button" on:click={() => showNoteSidebar = false}>Close</button>
     </div>
-  </div>  
+  {:else}
+    <div></div>
   {/if}
+</div>
 </div>
 
 {#if showPopup}

@@ -352,17 +352,29 @@ textarea::-webkit-scrollbar {
   }
   
   .note-sidebar {
-	position: fixed;
-	right: 0;
-	top: 0;
-	bottom: 0;
-	width: 15%;
-	background-color: var(--section-bg);
-	padding: 1em;
-	box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-	display: flex;
-	flex-direction: column;
-	z-index: 9999;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 15%;
+    background-color: var(--section-bg);
+    padding: 1em;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  
+    h2,
+    h3 {
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+    }
+  }
+  
+  .note-sidebar.open {
+    transform: translateX(0);
   }
   
   .complete-btn, .uncomplete-btn {
