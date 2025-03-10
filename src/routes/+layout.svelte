@@ -2,11 +2,14 @@
   import { onMount } from 'svelte';
   import Header from './Header.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
+  import LoadingScreen from '$lib/components/LoadingScreen.svelte';
   import { getCurrentUser, user } from '$lib/auth';
   import { sidebarVisible, darkMode } from '$lib/stores/sidebarStore';
   import '../app.css';
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
+
+  let isLoading = true;
 
   onMount(() => {
     getCurrentUser();
@@ -36,6 +39,10 @@
         document.body.appendChild(script);
       }
     }
+    
+    setTimeout(() => {
+      isLoading = false;
+    }, 1500);
   });
 
   $: if ($user) {
@@ -48,6 +55,8 @@
       : document.body.classList.remove('dark-mode');
   }
 </script>
+
+<LoadingScreen bind:isLoading />
 
 <div class="app">
   <Header />
