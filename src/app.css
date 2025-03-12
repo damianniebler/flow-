@@ -1215,6 +1215,29 @@ textarea::-webkit-scrollbar {
     .note-sidebar-buttons button {
       flex: 1;
     }
+
+    .folder-item {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 20px; /* Add some right padding */
+    }
+    
+    .folder-item a {
+      max-width: 55%; /* Limit the width of folder names */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .folder-actions {
+      flex-shrink: 0; /* Prevent the actions from shrinking */
+      position: relative;
+      right: 0;
+    }
+    
+    .drag-handle {
+      flex-shrink: 0; /* Prevent the drag handle from shrinking */
+    }
 }
 
 .tutorial-dont-show {

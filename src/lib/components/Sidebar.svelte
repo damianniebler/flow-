@@ -242,23 +242,23 @@
             on:dragleave={handleDragLeave}
             on:drop={(e) => handleDrop(e, folder, index)}
           >
-            <div class="folder-item">
-              <span class="drag-handle">⋮⋮</span>
-              <a 
-                href="/folder/{folder.id}" 
-                on:click={() => {
-                  if (window.innerWidth <= 768) {
-                    sidebarVisible.set(false);
-                  }
-                }}
-              >
-                {folder.name}
-              </a>
-              <div class="folder-actions">
-                <button class="btn-icon" on:click={() => renameFolder(folder)}>✏️</button>
-                <button class="btn-icon" on:click={() => deleteFolder(folder)}>🗑️</button>
-              </div>
+          <div class="folder-item">
+            <span class="drag-handle">⋮⋮</span>
+            <a 
+              href="/folder/{folder.id}" 
+              on:click={() => {
+                if (window.innerWidth <= 768) {
+                  sidebarVisible.set(false);
+                }
+              }}
+            >
+              {folder.name}
+            </a>
+            <div class="folder-actions">
+              <button class="btn-icon" on:click={() => renameFolder(folder)}>✏️</button>
+              <button class="btn-icon" on:click={() => deleteFolder(folder)}>🗑️</button>
             </div>
+          </div>
           </li>
         {/each}
       </ul>
