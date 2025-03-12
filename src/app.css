@@ -704,30 +704,24 @@ textarea::-webkit-scrollbar {
   }
 
   aside li a {
-	position: relative;
-	padding-left: 0;
-	transition: padding-left 0.3s ease;
+    position: relative;
+    text-decoration: none;
+    color: var(--text-color);
   }
   
-  aside li a::before {
-	content: "⮞";
-	font-size: 1.25em;
-	color: var(--button-hover-bg);
-	position: absolute;
-	left: -20px;
-	top: 50%;
-	transform: translateY(-50%);
-	opacity: 0;
-	transition: all 0.3s ease;
+  aside li a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background-color: var(--button-hover-bg);
+    transition: width 0.3s ease;
   }
   
-  aside li a:hover {
-	padding-left: 11px;
-  }
-  
-  aside li a:hover::before {
-	opacity: 1;
-	left: -10px;
+  aside li a:hover::after {
+    width: 100%;
   }
 
   .item-content {
@@ -1311,4 +1305,44 @@ textarea::-webkit-scrollbar {
 @keyframes fadeOut {
   from { opacity: 1; }
   to { opacity: 0; }
+}
+
+
+.folder-list li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  padding: 0.25rem 0;
+  transition: background-color 0.2s ease;
+}
+
+.folder-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--text-color);
+  opacity: 0.5;
+  margin-right: 0.5rem;
+  touch-action: none;
+  user-select: none;
+}
+
+.folder-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.folder-list li.dragging {
+  opacity: 0.5;
+  background-color: var(--section-bg);
+}
+
+.folder-list li.drag-over {
+  border-top: 2px solid var(--button-bg);
 }
