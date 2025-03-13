@@ -54,6 +54,10 @@
       ? document.body.classList.add('dark-mode')
       : document.body.classList.remove('dark-mode');
   }
+
+  $: if (browser && window.innerWidth <= 768 && $page) {
+    sidebarVisible.set(false);
+  }
 </script>
 
 <LoadingScreen bind:isLoading />
@@ -61,7 +65,7 @@
 <div class="app">
   <Header />
   <div class="content">
-    {#if $user && $sidebarVisible}
+    {#if $user}
       <Sidebar />
     {/if}
     <main>

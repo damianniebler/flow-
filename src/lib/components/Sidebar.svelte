@@ -8,6 +8,8 @@
   import '../../app.css';
   import { tick } from 'svelte';
   import { darkMode } from '$lib/stores/sidebarStore';
+  import { afterUpdate } from 'svelte';
+  import { spring } from 'svelte/motion';
 
   let isLoading = true;
   let folders = [];
@@ -15,12 +17,143 @@
   let draggedFolder = null;
   let dragOverIndex = -1;
 
+  let touchStartY = 0;
+  let touchStartX = 0;
+  let touchedElement = null;
+  let touchedIndex = -1;
+  let touchActive = false;
+  let yOffset = 0;
+  let folderElements = [];
+  let folderHeight = 0;
+
   $: if ($user) {
     loadFolders();
   }
   
   function toggleDarkMode() {
     darkMode.update(value => !value);
+  }
+
+  afterUpdate(() => {
+    if (browser) {
+      if ($sidebarVisible && window.innerWidth <= 768) {
+        document.body.classList.add('sidebar-open');
+      } else {
+        document.body.classList.remove('sidebar-open');
+      }
+    }
+  });
+  
+  onMount(() => {
+  // Prevent regular scrolling when a drag operation is in progress
+  if (browser) {
+    const sidebar = document.querySelector('aside');
+    if (sidebar) {
+      sidebar.addEventListener('touchmove', (e) => {
+        if (touchActive) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+    }
+    
+    return () => {
+      document.body.classList.remove('sidebar-open');
+      if (sidebar) {
+        sidebar.removeEventListener('touchmove', () => {});
+      }
+    };
+  }
+});
+
+
+  function handleTouchStart(event, folder, index) {
+    // Prevent default only for the drag handle to allow scrolling elsewhere
+    if (event.target.classList.contains('drag-handle')) {
+      event.preventDefault();
+      touchActive = true;
+      touchedElement = event.currentTarget;
+      touchedIndex = index;
+      touchStartY = event.touches[0].clientY;
+      touchStartX = event.touches[0].clientX;
+      draggedFolder = folder;
+      
+      // Get element dimensions
+      const rect = touchedElement.getBoundingClientRect();
+      folderHeight = rect.height;
+      
+      // Apply visual feedback
+      touchedElement.classList.add('dragging');
+      
+      // Get all folder elements for position comparison
+      folderElements = Array.from(document.querySelectorAll('.folder-list li'));
+    }
+  }
+  
+  // Function to handle touch move
+  function handleTouchMove(event) {
+    if (!touchActive || !touchedElement) return;
+    
+    event.preventDefault();
+    
+    // Calculate how far we've moved
+    const touchY = event.touches[0].clientY;
+    yOffset = touchY - touchStartY;
+    
+    // Apply transform to the dragged element
+    touchedElement.style.transform = `translateY(${yOffset}px)`;
+    
+    // Determine potential drop position
+    const newIndex = determineDropIndex(touchY);
+    if (newIndex !== -1 && newIndex !== touchedIndex) {
+      dragOverIndex = newIndex;
+    }
+  }
+  
+  // Function to determine drop index based on Y position
+  function determineDropIndex(touchY) {
+    for (let i = 0; i < folderElements.length; i++) {
+      if (i !== touchedIndex) {
+        const rect = folderElements[i].getBoundingClientRect();
+        const center = rect.top + rect.height / 2;
+        
+        if (touchY < center) {
+          return i;
+        }
+      }
+    }
+    return folderElements.length - 1;
+  }
+  
+  // Function to handle touch end
+  function handleTouchEnd(event) {
+    if (!touchActive) return;
+    
+    touchActive = false;
+    touchedElement.style.transform = '';
+    touchedElement.classList.remove('dragging');
+    
+    if (dragOverIndex !== -1 && dragOverIndex !== touchedIndex) {
+      // Update local state
+      const updatedFolders = [...folders];
+      const [removed] = updatedFolders.splice(touchedIndex, 1);
+      updatedFolders.splice(dragOverIndex, 0, removed);
+      
+      // Update display_order for all folders
+      updatedFolders.forEach((folder, idx) => {
+        folder.display_order = idx + 1;
+      });
+      
+      folders = updatedFolders;
+      
+      // Update database
+      updateFolderOrder(draggedFolder.id, dragOverIndex);
+    }
+    
+    // Reset variables
+    dragOverIndex = -1;
+    touchedElement = null;
+    touchedIndex = -1;
+    draggedFolder = null;
   }
 
   async function loadFolders() {
@@ -233,7 +366,7 @@
     {#if $user}
       <ul class="folder-list">
         {#each folders as folder, index (folder.id)}
-          <li 
+          <li
             class:drag-over={dragOverIndex === index}
             draggable="true"
             on:dragstart={(e) => handleDragStart(e, folder, index)}
@@ -241,24 +374,28 @@
             on:dragover={(e) => handleDragOver(e, index)}
             on:dragleave={handleDragLeave}
             on:drop={(e) => handleDrop(e, folder, index)}
+            on:touchstart={(e) => handleTouchStart(e, folder, index)}
+            on:touchmove|preventDefault={handleTouchMove}
+            on:touchend={handleTouchEnd}
+            on:touchcancel={handleTouchEnd}
           >
-          <div class="folder-item">
-            <span class="drag-handle">⋮⋮</span>
-            <a 
-              href="/folder/{folder.id}" 
-              on:click={() => {
-                if (window.innerWidth <= 768) {
-                  sidebarVisible.set(false);
-                }
-              }}
-            >
-              {folder.name}
-            </a>
-            <div class="folder-actions">
-              <button class="btn-icon" on:click={() => renameFolder(folder)}>✏️</button>
-              <button class="btn-icon" on:click={() => deleteFolder(folder)}>🗑️</button>
+            <div class="folder-item">
+              <span class="drag-handle">⋮⋮</span>
+              <a
+                href="/folder/{folder.id}"
+                on:click={() => {
+                  if (window.innerWidth <= 768) {
+                    sidebarVisible.set(false);
+                  }
+                }}
+              >
+                {folder.name}
+              </a>
+              <div class="folder-actions">
+                <button class="btn-icon" on:click={() => renameFolder(folder)}>✏️</button>
+                <button class="btn-icon" on:click={() => deleteFolder(folder)}>🗑️</button>
+              </div>
             </div>
-          </div>
           </li>
         {/each}
       </ul>
