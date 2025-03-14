@@ -5,14 +5,14 @@
     
     const handleSignOut = () => signOut();
     const toggleSidebar = () => sidebarVisible.update(v => !v);
-    
+
     const startTutorial = () => {
         sidebarVisible.set(true);
         isMenuOpen = false;
     
         if (!window.tutorial) {
            window.tutorial = new Tutorial();
-        }w
+        }
         window.tutorial.start(true);
     };
 
