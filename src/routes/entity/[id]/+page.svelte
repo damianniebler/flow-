@@ -2,7 +2,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { supabase } from '../../../supabase';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import '../../../app.css';
   import LinkOptionsPopup from '$lib/components/LinkOptionsPopup.svelte';
   import { browser } from '$app/environment';
@@ -78,7 +78,6 @@
   }
 }
 
-
   async function createItem() {
   if (newItemName.trim()) {
     const { data, error } = await supabase
@@ -132,12 +131,14 @@
   }
 
   function handleKeydown(event) {
-    if (event.ctrlKey && event.key === 's') {
-      event.preventDefault();
-      updateItemNote();
-      showNoteSidebar = false;
-    }
+  if (event.ctrlKey && event.key === 's') {
+    event.preventDefault();
+    updateItemNote();
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    updateItemNoteWithoutTimestamp();
   }
+}
 
   function formatRelativeTime(timestamp) {
     const now = new Date();
@@ -187,9 +188,16 @@
   }
 }
 
-  function openNoteSidebar(item) {
+async function openNoteSidebar(item) {
     selectedItem = item;
     showNoteSidebar = true;
+    
+    await tick();
+    
+    const noteArea = document.getElementById('note-area');
+    if (noteArea) {
+      noteArea.focus();
+    }
   }
 
   async function updateItemNote() {
@@ -229,7 +237,6 @@ function parseNoteWithLinks(note) {
   const fullLinks = Array.from(note.matchAll(urlRegex), m => m[0]);
   
   const truncatedNote = truncateNote(note);
-  const matches = truncatedNote.matchAll(urlRegex);
   const hasLinks = fullLinks.length > 0;
 
   if (!hasLinks) return { text: truncatedNote, hasLinks: false };
@@ -268,6 +275,25 @@ function showOptionsPopup(item, rect) {
     left: rect.left + window.scrollX
   };
   showPopup = true;
+}
+
+async function updateItemNoteWithoutTimestamp() {
+  const { error } = await supabase
+    .from('items')
+    .update({ 
+      note: selectedItem.note
+    })
+    .eq('id', selectedItem.id);
+
+  if (error) {
+    console.error('Error updating item note:', error);
+  } else {
+    items = items.map(i => i.id === selectedItem.id 
+      ? {...i, note: selectedItem.note} 
+      : i);
+    
+    showNoteSidebar = false;
+  }
 }
 
 
@@ -423,9 +449,9 @@ Click to add a note
     <h3>Note</h3>
     <textarea id="note-area" bind:value={selectedItem.note} on:keydown={handleKeydown}></textarea>
     <div class="note-sidebar-buttons">
-      <button id="save-note" class="button" on:click={updateItemNote}>Save Note</button>
-      <button class="second-button" on:click={() => showNoteSidebar = false}>Close</button>
-    </div>
+      <button id="save-note" class="button" on:click={updateItemNote}>Save & Update</button>
+      <button class="second-button" on:click={updateItemNoteWithoutTimestamp}>Save & Close</button>
+    </div>    
   {:else}
     <div></div>
   {/if}
