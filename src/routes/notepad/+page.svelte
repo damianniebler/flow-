@@ -6,7 +6,6 @@
   import pkg from 'lodash';
   import '../../app.css';
   import { browser } from '$app/environment';
-  import { get } from 'svelte/store';
 
   const { debounce } = pkg;
   let noteContent = '';
@@ -75,7 +74,6 @@
     if (isSelecting && textareaElement) {
       if (event.type === 'touchend') {
         const touch = event.changedTouches[0];
-        // Use requestAnimationFrame to wait for selection to be ready
         requestAnimationFrame(() => {
           handleSelection({
             clientX: touch.clientX,
@@ -86,23 +84,6 @@
       } else {
         handleSelection(event);
       }
-    }
-
-    isSelecting = false;
-  }
-
-  function handleGlobalMouseup(event) {
-    const createItemButton = event.target.closest('.create-item-option');
-    if (!createItemButton) {
-      showCreateItemOption = false;
-    }
-
-    if (
-      isSelecting &&
-      textareaElement &&
-      textareaElement.selectionStart !== textareaElement.selectionEnd
-    ) {
-      handleSelection(event);
     }
 
     isSelecting = false;
@@ -144,24 +125,20 @@
   function getSelectionCoordinates() {
     if (!mirrorDiv) return null;
 
-    // Copy textarea styles to mirror
     const textareaStyle = window.getComputedStyle(textareaElement);
     mirrorDiv.style.width = textareaStyle.width;
     mirrorDiv.style.font = textareaStyle.font;
     mirrorDiv.style.padding = textareaStyle.padding;
     mirrorDiv.style.lineHeight = textareaStyle.lineHeight;
 
-    // Create content up to selection
     const textBeforeSelection = noteContent.substring(0, textareaElement.selectionStart);
     const selectedText = noteContent.substring(textareaElement.selectionStart, textareaElement.selectionEnd);
     
-    // Set mirror content
     mirrorDiv.textContent = textBeforeSelection;
     const span = document.createElement('span');
     span.textContent = selectedText;
     mirrorDiv.appendChild(span);
 
-    // Get position
     const spanRect = span.getBoundingClientRect();
     return {
       top: spanRect.bottom,
@@ -232,7 +209,6 @@
     }
   }, 50);
 }
-
 
   function handleCreateItemClick() {
     showPopup = true;

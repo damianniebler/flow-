@@ -1,6 +1,5 @@
 <script>
     import { supabase } from '../../supabase';
-    import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
     import '../../app.css';
 

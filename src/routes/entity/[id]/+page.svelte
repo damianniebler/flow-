@@ -6,7 +6,6 @@
   import '../../../app.css';
   import LinkOptionsPopup from '$lib/components/LinkOptionsPopup.svelte';
   import { browser } from '$app/environment';
-  import { slide } from 'svelte/transition';
 
   let entity = null;
   let items = [];
@@ -226,11 +225,9 @@ function truncateNote(note) {
 function parseNoteWithLinks(note) {
   if (!note) return { text: '', hasLinks: false };
 
-  // Extract all links from the original note first
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const fullLinks = Array.from(note.matchAll(urlRegex), m => m[0]);
   
-  // Then truncate the note
   const truncatedNote = truncateNote(note);
   const matches = truncatedNote.matchAll(urlRegex);
   const hasLinks = fullLinks.length > 0;
@@ -243,7 +240,6 @@ function parseNoteWithLinks(note) {
   
   for (const match of truncatedNote.matchAll(urlRegex)) {
     parts.push(truncatedNote.substring(lastIndex, match.index));
-    // Store the display text and the full link
     parts.push({ display: match[0], fullLink: fullLinks[linkIndex] });
     lastIndex = match.index + match[0].length;
     linkIndex++;
@@ -266,7 +262,7 @@ let popupLink = '';
 function showOptionsPopup(item, rect) {
   popupItem = item;
   const parsed = parseNoteWithLinks(item.note);
-  popupLink = parsed.fullLinks[0]; // Use the full link
+  popupLink = parsed.fullLinks[0];
   popupPosition = {
     top: rect.bottom + window.scrollY + 5,
     left: rect.left + window.scrollX

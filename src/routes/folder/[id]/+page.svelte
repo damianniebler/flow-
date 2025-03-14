@@ -85,7 +85,6 @@
   }
 }
 
-
 onMount(() => {
   isMobile = window.innerWidth <= 768;
   window.addEventListener('resize', () => {
@@ -199,7 +198,6 @@ function handleEntityDnd(e, targetSectionId) {
         console.error('Error creating section:', error);
       } else {
         console.log('Section created successfully:', data[0]);
-        // Clear input only when not in step 2 of tutorial
         if (!window.tutorial || window.tutorial.currentStep !== 2 || window.tutorial.sectionsCreated >= 2) {
           newSectionName = '';
         }
@@ -258,7 +256,6 @@ async function createEntity(sectionId, entityName) {
   }
 }
 
-
   async function moveEntityToSection(entity, targetSectionId) {
     if (targetSectionId) {
       const { error } = await supabase
@@ -290,7 +287,6 @@ async function createEntity(sectionId, entityName) {
 
   async function moveEntityToFolder(entity, targetFolderId) {
   if (targetFolderId) {
-    // First, try to get an existing section
     let { data: existingSection, error: sectionError } = await supabase
       .from('sections')
       .select('id')
@@ -302,7 +298,6 @@ async function createEntity(sectionId, entityName) {
     let targetSectionId;
 
     if (sectionError) {
-      // If no section exists, create a new one
       const { data: newSection, error: createError } = await supabase
         .from('sections')
         .insert({ name: 'Default Section', folder_id: targetFolderId, order: 0 })
@@ -319,7 +314,6 @@ async function createEntity(sectionId, entityName) {
       targetSectionId = existingSection.id;
     }
 
-    // Now move the entity to the target section
     const { error: updateError } = await supabase
       .from('entities')
       .update({ section_id: targetSectionId })

@@ -179,14 +179,8 @@
   }
 }
 
-
-  function updateNewFolderName(value) {
-    newFolderName = value;
-  }
-
   async function createFolder() {
     if (newFolderName.trim() && $user) {
-      // Get max display_order and add 1
       const maxOrder = folders.length > 0 
         ? Math.max(...folders.map(f => f.display_order || 0)) 
         : 0;
@@ -206,7 +200,6 @@
         folders = [...folders, data[0]];
         newFolderName = '';
 
-        // Only trigger tutorial actions if tutorial is active
         if (window.tutorial && window.tutorial.currentStep !== undefined) {
           newFolderId.set(data[0].id);
           await tick();
@@ -224,7 +217,6 @@
     if (window.tutorial && window.tutorial.currentStep !== undefined && typeof window.tutorial.folderCreated === 'function') {
       window.tutorial.folderCreated($newFolderId);
     }
-    // MOVE this line AFTER the tutorial function call
     newFolderId.set(null); 
   }
 
@@ -257,19 +249,16 @@
         console.error('Error deleting folder:', error);
       } else {
         folders = folders.filter(f => f.id !== folder.id);
-        // Update display_order for remaining folders
         await reorderFolders();
       }
     }
   }
 
-  // Drag and drop handlers
   function handleDragStart(event, folder, index) {
     draggedFolder = folder;
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', folder.id);
     
-    // Add styling to the dragged element
     setTimeout(() => {
       event.target.classList.add('dragging');
     }, 0);
@@ -287,7 +276,6 @@
   }
 
   function handleDragLeave() {
-    // We don't reset dragOverIndex here to maintain the visualization
   }
 
   async function handleDrop(event, targetFolder, targetIndex) {
@@ -298,37 +286,31 @@
     }
     
     const sourceIndex = folders.findIndex(f => f.id === draggedFolder.id);
-    
-    // Update local state first for immediate feedback
+
     const updatedFolders = [...folders];
     const [removed] = updatedFolders.splice(sourceIndex, 1);
     updatedFolders.splice(targetIndex, 0, removed);
-    
-    // Update display_order for all folders
+
     updatedFolders.forEach((folder, idx) => {
       folder.display_order = idx + 1;
     });
     
     folders = updatedFolders;
     dragOverIndex = -1;
-    
-    // Update database
+
     await updateFolderOrder(draggedFolder.id, targetIndex);
   }
 
   async function updateFolderOrder(folderId, newIndex) {
     try {
-      // We'll update all folder orders at once
       await reorderFolders();
     } catch (error) {
       console.error('Error updating folder order:', error);
-      // If there's an error, reload folders from database
       await loadFolders();
     }
   }
 
   async function reorderFolders() {
-  // Update each folder individually to ensure they all get updated
   for (let i = 0; i < folders.length; i++) {
     const folder = folders[i];
     const { error } = await supabase

@@ -1,5 +1,5 @@
 <script>
-  import { user, getCurrentUser } from '$lib/auth';
+  import { getCurrentUser } from '$lib/auth';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { supabase } from '../supabase';
