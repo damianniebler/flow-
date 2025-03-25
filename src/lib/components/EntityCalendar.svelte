@@ -24,16 +24,35 @@
           return;
         }
         
-        // Handle any redirect from Microsoft authentication
-        // Use getAccessToken which already ensures MSAL is initialized
-        try {
-          // This will initialize MSAL and handle any redirects
-          const token = await getAccessToken();
-          if (token) {
-            console.log("Successfully handled authentication");
+        // Check if already logged in with Microsoft
+        const msLoggedIn = isMicrosoftLoggedIn();
+        
+        if (!msLoggedIn) {
+          // Handle any redirect from Microsoft authentication
+          try {
+            // This will initialize MSAL and handle any redirects
+            const result = await getMsalInstance().handleRedirectPromise();
+            if (result) {
+              console.log("Successfully handled authentication redirect");
+            } else {
+              error = "You need to connect your Microsoft account to access calendar";
+              loading = false;
+              return;
+            }
+          } catch (redirectError) {
+            console.error("Error handling authentication:", redirectError);
+            error = "Error connecting to Microsoft account";
+            loading = false;
+            return;
           }
-        } catch (redirectError) {
-          console.error("Error handling authentication:", redirectError);
+        }
+        
+        // Try to get a token
+        const token = await getAccessToken();
+        if (!token) {
+          error = "You need to connect your Microsoft account to access calendar";
+          loading = false;
+          return;
         }
         
         // Continue with loading calendar data

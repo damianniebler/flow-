@@ -74,16 +74,16 @@ export async function resetPassword(email) {
 
 // MSAL configuration
 const msalConfig = {
-    auth: {
-      clientId: MICROSOFT_CLIENT_ID,
-      authority: "https://login.microsoftonline.com/common",
-      redirectUri: typeof window !== 'undefined' ? window.location.origin : '',
-      navigateToLoginRequestUrl: true
-    },
-    cache: {
-      cacheLocation: "sessionStorage",
-      storeAuthStateInCookie: false,
-    },
+  auth: {
+    clientId: MICROSOFT_CLIENT_ID,
+    authority: "https://login.microsoftonline.com/common",
+    redirectUri: typeof window !== 'undefined' ? window.location.origin : '',
+    navigateToLoginRequestUrl: true
+  },
+  cache: {
+    cacheLocation: "localStorage", // Change from sessionStorage to localStorage
+    storeAuthStateInCookie: true,  // Enable cookies as fallback
+  },
     system: {
       allowRedirectInIframe: true,
       loggerOptions: {
@@ -141,6 +141,15 @@ export function getMsalInstance() {
     return msalInstance;
   }
   return null;
+}
+
+// Add this function to auth.js
+export function isMicrosoftLoggedIn() {
+  const instance = getMsalInstance();
+  if (!instance) return false;
+  
+  const accounts = instance.getAllAccounts();
+  return accounts.length > 0;
 }
 
 // Ensure MSAL is initialized
