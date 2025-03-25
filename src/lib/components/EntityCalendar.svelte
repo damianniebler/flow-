@@ -14,91 +14,107 @@
     
     // Handle redirect when component mounts
     onMount(async () => {
-      try {
-        // Get the current user
-        const { data } = await supabase.auth.getUser();
-        currentUser = data.user;
-        
-        if (!currentUser) {
-          error = "You need to be logged in to access calendar";
-          loading = false;
-          return;
-        }
-        
-        // First, ensure MSAL is initialized
-        const msalInstance = await ensureInitialized();
-        if (!msalInstance) {
-          error = "Failed to initialize Microsoft authentication";
-          loading = false;
-          return;
-        }
-        
-        // Handle any redirect from Microsoft authentication
-        try {
-          const result = await msalInstance.handleRedirectPromise();
-          if (result) {
-            console.log("Successfully handled authentication redirect");
-          }
-        } catch (redirectError) {
-          console.error("Error handling authentication:", redirectError);
-        }
-        
-        // Check if already logged in with Microsoft
-        const msLoggedIn = isMicrosoftLoggedIn();
-        
-        // Try to get a token
-        const token = await getAccessToken();
-        if (!token && !msLoggedIn) {
-          error = "You need to connect your Microsoft account to access calendar";
-          loading = false;
-          return;
-        }
-        
-        // Continue with loading calendar data
-        await loadCalendarData();
-      } catch (err) {
-        console.error('Error in onMount:', err);
-        error = err.message;
-        loading = false;
-      }
-    });
+  try {
+    console.log("Starting onMount");
     
-    async function loadCalendarData() {
-      try {
-        // Get already linked events
-        linkedEvents = await getEntityCalendarEvents(entityId);
-        
-        // Get access token for Microsoft Graph API
-        const accessToken = await getAccessToken();
-        
-        if (!accessToken) {
-          error = "You need to connect your Microsoft account to access calendar";
-          loading = false;
-          return;
-        }
-        
-        // Set date range for next 30 days
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + 30);
-        
-        // Fetch calendar events
-        calendarEvents = await fetchUserCalendarEvents(
-          accessToken,
-          startDate,
-          endDate
-        );
-        
-        // Filter out already linked events
-        const linkedEventIds = linkedEvents.map(e => e.event_id);
-        calendarEvents = calendarEvents.filter(event => !linkedEventIds.includes(event.id));
-      } catch (err) {
-        console.error('Error loading calendar data:', err);
-        error = err.message;
-      } finally {
-        loading = false;
-      }
+    // Get the current user
+    const { data } = await supabase.auth.getUser();
+    currentUser = data.user;
+    console.log("Current user:", currentUser);
+    
+    if (!currentUser) {
+      error = "You need to be logged in to access calendar";
+      loading = false;
+      return;
     }
+    
+    // First, ensure MSAL is initialized
+    const msalInstance = await ensureInitialized();
+    console.log("MSAL initialized:", !!msalInstance);
+    
+    if (!msalInstance) {
+      error = "Failed to initialize Microsoft authentication";
+      loading = false;
+      return;
+    }
+    
+    // Handle any redirect from Microsoft authentication
+    try {
+      const result = await msalInstance.handleRedirectPromise();
+      console.log("Redirect result:", result);
+      if (result) {
+        console.log("Successfully handled authentication redirect");
+      }
+    } catch (redirectError) {
+      console.error("Error handling authentication:", redirectError);
+    }
+    
+    // Check if already logged in with Microsoft
+    const msLoggedIn = isMicrosoftLoggedIn();
+    console.log("Microsoft logged in:", msLoggedIn);
+    
+    // Try to get a token
+    const token = await getAccessToken();
+    console.log("Token acquired:", !!token);
+    
+    if (!token && !msLoggedIn) {
+      error = "You need to connect your Microsoft account to access calendar";
+      loading = false;
+      return;
+    }
+    
+    // Continue with loading calendar data
+    await loadCalendarData();
+  } catch (err) {
+    console.error('Error in onMount:', err);
+    error = err.message;
+    loading = false;
+  }
+});
+    
+async function loadCalendarData() {
+  try {
+    console.log("Starting loadCalendarData");
+    
+    // Get already linked events
+    linkedEvents = await getEntityCalendarEvents(entityId);
+    console.log("Linked events:", linkedEvents);
+    
+    // Get access token for Microsoft Graph API
+    const accessToken = await getAccessToken();
+    console.log("Access token obtained:", !!accessToken);
+    
+    if (!accessToken) {
+      error = "You need to connect your Microsoft account to access calendar";
+      loading = false;
+      return;
+    }
+    
+    // Set date range for next 30 days
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 30);
+    console.log("Date range:", { startDate, endDate });
+    
+    // Fetch calendar events
+    calendarEvents = await fetchUserCalendarEvents(
+      accessToken,
+      startDate,
+      endDate
+    );
+    console.log("Fetched calendar events:", calendarEvents);
+    
+    // Filter out already linked events
+    const linkedEventIds = linkedEvents.map(e => e.event_id);
+    calendarEvents = calendarEvents.filter(event => !linkedEventIds.includes(event.id));
+    console.log("Filtered calendar events:", calendarEvents);
+  } catch (err) {
+    console.error('Error loading calendar data:', err);
+    error = err.message;
+  } finally {
+    loading = false;
+  }
+}
     
     async function fetchUserCalendarEvents(accessToken, startDate, endDate) {
       try {

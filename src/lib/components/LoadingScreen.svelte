@@ -21,4 +21,4 @@
     <div class="loading-bar">
       <div class="loading-progress"></div>
     </div>
-  </div>  
+  </div>

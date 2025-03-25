@@ -153,6 +153,7 @@ export function isMicrosoftLoggedIn() {
 }
 
 
+
 // Ensure MSAL is initialized
 export async function ensureInitialized() {
   const instance = getMsalInstance();
