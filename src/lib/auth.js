@@ -154,12 +154,15 @@ export function isMicrosoftLoggedIn() {
 
 
 // Ensure MSAL is initialized
-async function ensureInitialized() {
+export async function ensureInitialized() {
+  const instance = getMsalInstance();
+  if (!instance) return null;
+  
   if (initializePromise) {
     await initializePromise;
-  } else if (msalInstance && !isInitializing) {
+  } else if (!isInitializing) {
     isInitializing = true;
-    initializePromise = msalInstance.initialize()
+    initializePromise = instance.initialize()
       .catch(error => {
         console.error("Failed to initialize MSAL:", error);
         isInitializing = false;
@@ -167,10 +170,12 @@ async function ensureInitialized() {
       })
       .then(() => {
         isInitializing = false;
-        return msalInstance;
+        return instance;
       });
     await initializePromise;
   }
+  
+  return instance;
 }
 
 // Login with Microsoft
@@ -235,12 +240,10 @@ export async function loginWithMicrosoft() {
 
 // Get access token for Microsoft Graph API
 export async function getAccessToken() {
-  const instance = getMsalInstance();
-  if (!instance) return null;
-  
   try {
     // Ensure MSAL is initialized
-    await ensureInitialized();
+    const instance = await ensureInitialized();
+    if (!instance) return null;
     
     // Try to handle any pending redirects first
     try {
