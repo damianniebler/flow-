@@ -84,32 +84,33 @@ const msalConfig = {
     cacheLocation: "localStorage", // Change from sessionStorage to localStorage
     storeAuthStateInCookie: true,  // Enable cookies as fallback
   },
-    system: {
-      allowRedirectInIframe: true,
-      loggerOptions: {
-        loggerCallback: (level, message, containsPii) => {
-          if (containsPii) {
+  system: {
+    allowRedirectInIframe: true,
+    loggerOptions: {
+      loggerCallback: (level, message, containsPii) => {
+        if (containsPii) {
+          return;
+        }
+        switch (level) {
+          case 0: // Error
+            console.error(message);
             return;
-          }
-          switch (level) {
-            case 0: // Error
-              console.error(message);
-              return;
-            case 1: // Warning
-              console.warn(message);
-              return;
-            case 2: // Info
-              console.info(message);
-              return;
-            case 3: // Verbose
-              console.debug(message);
-              return;
-          }
-        },
-        logLevel: 3
-      }
+          case 1: // Warning
+            console.warn(message);
+            return;
+          case 2: // Info
+            console.info(message);
+            return;
+          case 3: // Verbose
+            console.debug(message);
+            return;
+        }
+      },
+      logLevel: 3
     }
-  };
+  }
+};
+
   
 
 // Create MSAL instance
@@ -238,6 +239,7 @@ export async function loginWithMicrosoft() {
     return null;
   }
 }
+
 
 // Get access token for Microsoft Graph API
 export async function getAccessToken() {

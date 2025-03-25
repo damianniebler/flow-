@@ -14,63 +14,63 @@
     
     // Handle redirect when component mounts
     onMount(async () => {
-  try {
-    console.log("Starting onMount");
-    
-    // Get the current user
-    const { data } = await supabase.auth.getUser();
-    currentUser = data.user;
-    console.log("Current user:", currentUser);
-    
-    if (!currentUser) {
-      error = "You need to be logged in to access calendar";
-      loading = false;
-      return;
-    }
-    
-    // First, ensure MSAL is initialized
-    const msalInstance = await ensureInitialized();
-    console.log("MSAL initialized:", !!msalInstance);
-    
-    if (!msalInstance) {
-      error = "Failed to initialize Microsoft authentication";
-      loading = false;
-      return;
-    }
-    
-    // Handle any redirect from Microsoft authentication
-    try {
-      const result = await msalInstance.handleRedirectPromise();
-      console.log("Redirect result:", result);
-      if (result) {
-        console.log("Successfully handled authentication redirect");
+      try {
+        console.log("Starting onMount");
+        
+        // Get the current user
+        const { data } = await supabase.auth.getUser();
+        currentUser = data.user;
+        console.log("Current user:", currentUser);
+        
+        if (!currentUser) {
+          error = "You need to be logged in to access calendar";
+          loading = false;
+          return;
+        }
+        
+        // First, ensure MSAL is initialized
+        const msalInstance = await ensureInitialized();
+        console.log("MSAL initialized:", !!msalInstance);
+        
+        if (!msalInstance) {
+          error = "Failed to initialize Microsoft authentication";
+          loading = false;
+          return;
+        }
+        
+        // Handle any redirect from Microsoft authentication
+        try {
+          const result = await msalInstance.handleRedirectPromise();
+          console.log("Redirect result:", result);
+          if (result) {
+            console.log("Successfully handled authentication redirect");
+          }
+        } catch (redirectError) {
+          console.error("Error handling authentication:", redirectError);
+        }
+        
+        // Check if already logged in with Microsoft
+        const msLoggedIn = isMicrosoftLoggedIn();
+        console.log("Microsoft logged in:", msLoggedIn);
+        
+        // Try to get a token
+        const token = await getAccessToken();
+        console.log("Token acquired:", !!token);
+        
+        if (!token && !msLoggedIn) {
+          error = "You need to connect your Microsoft account to access calendar";
+          loading = false;
+          return;
+        }
+        
+        // Continue with loading calendar data
+        await loadCalendarData();
+      } catch (err) {
+        console.error('Error in onMount:', err);
+        error = err.message;
+        loading = false;
       }
-    } catch (redirectError) {
-      console.error("Error handling authentication:", redirectError);
-    }
-    
-    // Check if already logged in with Microsoft
-    const msLoggedIn = isMicrosoftLoggedIn();
-    console.log("Microsoft logged in:", msLoggedIn);
-    
-    // Try to get a token
-    const token = await getAccessToken();
-    console.log("Token acquired:", !!token);
-    
-    if (!token && !msLoggedIn) {
-      error = "You need to connect your Microsoft account to access calendar";
-      loading = false;
-      return;
-    }
-    
-    // Continue with loading calendar data
-    await loadCalendarData();
-  } catch (err) {
-    console.error('Error in onMount:', err);
-    error = err.message;
-    loading = false;
-  }
-});
+    });
     
 async function loadCalendarData() {
   try {
