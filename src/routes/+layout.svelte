@@ -9,6 +9,10 @@
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { ensureInitialized } from '$lib/auth';
+  
+  // Add these imports for the notification system
+  import { initNotificationService } from '$lib/services/notificationService';
+  import EventNotification from '$lib/components/EventNotification.svelte';
 
   let isLoading = true;
 
@@ -26,6 +30,17 @@
         }
       } catch (error) {
         console.error("Error handling Microsoft redirect in global handler:", error);
+      }
+      
+      // Initialize notification service when user is available
+      if ($user) {
+        console.log("Initializing notification service for user:", $user.id);
+        initNotificationService($user.id);
+        
+        // Request notification permission
+        if (Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+          Notification.requestPermission();
+        }
       }
     }
 
@@ -63,6 +78,11 @@
     }, 1500);
   });
 
+  // Add a reactive statement to initialize notifications when user changes
+  $: if (browser && $user) {
+    initNotificationService($user.id);
+  }
+
   $: if ($user) {
     document.dispatchEvent(new Event('UserLoggedIn'));
   }
@@ -79,6 +99,9 @@
 </script>
 
 <LoadingScreen bind:isLoading />
+
+<!-- Add the EventNotification component here, outside of any containers -->
+<EventNotification />
 
 <div class="app">
   <Header />
