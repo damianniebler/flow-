@@ -1,7 +1,8 @@
 <script>
     import { onMount } from 'svelte';
     import { supabase } from '../../supabase';
-    import { getAccessToken, loginWithMicrosoft, getMsalInstance, isMicrosoftLoggedIn } from '$lib/auth';
+    import { getAccessToken, loginWithMicrosoft, getMsalInstance, isMicrosoftLoggedIn, ensureInitialized } from '$lib/auth';
+
     
     export let entityId;
     
