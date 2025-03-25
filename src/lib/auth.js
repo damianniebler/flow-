@@ -152,6 +152,7 @@ export function isMicrosoftLoggedIn() {
   return accounts.length > 0;
 }
 
+
 // Ensure MSAL is initialized
 async function ensureInitialized() {
   if (initializePromise) {
