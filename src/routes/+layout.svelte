@@ -8,10 +8,28 @@
   import '../app.css';
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
+  import { ensureInitialized } from '$lib/auth';
 
   let isLoading = true;
 
-  onMount(() => {
+  onMount(async () => {
+    // Handle MSAL redirects globally
+    if (browser) {
+      try {
+        const msalInstance = await ensureInitialized();
+        if (msalInstance) {
+          // This is crucial - it processes the response from Microsoft after login
+          const redirectResult = await msalInstance.handleRedirectPromise();
+          if (redirectResult) {
+            console.log("Global redirect handler: Successfully processed Microsoft authentication redirect");
+          }
+        }
+      } catch (error) {
+        console.error("Error handling Microsoft redirect in global handler:", error);
+      }
+    }
+
+    // Rest of your existing onMount code
     getCurrentUser();
     if (window.innerWidth <= 768) {
         sidebarVisible.set(false);

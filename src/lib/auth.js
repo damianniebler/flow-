@@ -70,6 +70,14 @@ export async function resetPassword(email) {
     return data;
 }
 
+function logStorageState() {
+  if (typeof window !== 'undefined') {
+    console.log("localStorage keys:", Object.keys(localStorage));
+    console.log("sessionStorage keys:", Object.keys(sessionStorage));
+    console.log("cookies:", document.cookie);
+  }
+}
+
 // Microsoft Authentication with MSAL
 
 // MSAL configuration
@@ -77,12 +85,12 @@ const msalConfig = {
   auth: {
     clientId: MICROSOFT_CLIENT_ID,
     authority: "https://login.microsoftonline.com/common",
-    redirectUri: typeof window !== 'undefined' ? window.location.origin : '',
-    navigateToLoginRequestUrl: true
+    redirectUri: typeof window !== 'undefined' ? `${window.location.origin}` : '', // Ensure exact match
+    navigateToLoginRequestUrl: false // Change to false to simplify redirect handling
   },
   cache: {
-    cacheLocation: "localStorage", // Use localStorage
-    storeAuthStateInCookie: true,  // Enable cookies as fallback
+    cacheLocation: "localStorage",
+    storeAuthStateInCookie: true
   },
   system: {
     allowRedirectInIframe: true,
@@ -143,13 +151,18 @@ export function getMsalInstance() {
 }
 
 // Check if the user is logged in with Microsoft
+// Check if the user is logged in with Microsoft
 export function isMicrosoftLoggedIn() {
+  // Add this line to log storage state
+  logStorageState();
+  
   const instance = getMsalInstance();
   if (!instance) return false;
 
   const accounts = instance.getAllAccounts();
   return accounts.length > 0;
 }
+
 
 // Ensure MSAL is initialized
 export async function ensureInitialized() {
@@ -178,79 +191,85 @@ export async function ensureInitialized() {
 
 // Login with Microsoft
 export async function loginWithMicrosoft() {
-    const instance = getMsalInstance();
-    if (!instance) return;
-
-    try {
-        // Ensure MSAL is initialized
-        await ensureInitialized();
-
-        const loginRequest = {
-            scopes: ["openid", "profile", "email", "User.Read", "Calendars.Read"],
-            prompt: "select_account",
-            redirectUri: typeof window !== 'undefined' ? window.location.origin : ''
-        };
-
-        // Redirect to Microsoft login
-        await instance.loginRedirect(loginRequest);
-
-    } catch (error) {
-        console.error("Login failed:", error);
-    }
+  const instance = getMsalInstance();
+  if (!instance) return null;
+  
+  try {
+    // Ensure MSAL is initialized
+    await ensureInitialized();
+    
+    // Simplify the login request
+    const loginRequest = {
+      scopes: ["User.Read", "Calendars.Read"], // Simplify scopes
+      prompt: "select_account"
+    };
+    
+    // Redirect to Microsoft login
+    await instance.loginRedirect(loginRequest);
+  } catch (error) {
+    console.error("Login failed:", error);
+    throw error; // Propagate the error
+  }
 }
+
 
 // Get access token for Microsoft Graph API
+// Get access token for Microsoft Graph API
 export async function getAccessToken() {
-    const instance = getMsalInstance();
-    if (!instance) return null;
+  const instance = getMsalInstance();
+  if (!instance) return null;
 
-    try {
-        // Ensure MSAL is initialized
-        await ensureInitialized();
+  try {
+      // Add this line to log storage state
+      logStorageState();
+      
+      // Ensure MSAL is initialized
+      await ensureInitialized();
 
-        // Try to handle any pending redirects first
-        const redirectResult = await instance.handleRedirectPromise();
-        if (redirectResult) {
-          console.log("handleRedirectPromise result:", redirectResult);
-          return redirectResult.accessToken; // Return the token if redirect was successful
-        }
+      // Try to handle any pending redirects first
+      const redirectResult = await instance.handleRedirectPromise();
+      if (redirectResult) {
+        console.log("handleRedirectPromise result:", redirectResult);
+        return redirectResult.accessToken; // Return the token if redirect was successful
+      }
 
-        const accounts = instance.getAllAccounts();
-        console.log("Current accounts:", accounts);
+      const accounts = instance.getAllAccounts();
+      console.log("Current accounts:", accounts);
 
-        if (accounts.length === 0) {
-            console.log("No accounts found.");
-            return null; // No accounts, return null
-        }
+      if (accounts.length === 0) {
+          console.log("No accounts found.");
+          return null; // No accounts, return null
+      }
 
-        const silentRequest = {
-            scopes: ["User.Read", "Calendars.Read"],
-            account: accounts[0]
-        };
+      const silentRequest = {
+          scopes: ["User.Read", "Calendars.Read"],
+          account: accounts[0]
+      };
 
-        try {
-            const response = await instance.acquireTokenSilent(silentRequest);
-            console.log("Silent token acquisition response:", response);
-            return response.accessToken;
-        } catch (error) {
-            console.error("Token acquisition failed silently:", error);
+      try {
+          const response = await instance.acquireTokenSilent(silentRequest);
+          console.log("Silent token acquisition response:", response);
+          return response.accessToken;
+      } catch (error) {
+          console.error("Token acquisition failed silently:", error);
 
-            // If silent acquisition fails AND user is not logged in, redirect
-            if (error instanceof BrowserAuthError && error.errorCode === "interaction_required") {
-                console.log("Interaction required, redirecting to login.");
-                await instance.loginRedirect({
-                    ...silentRequest,
-                    redirectStartPage: window.location.href,
-                });
-                return null; // Important: Return null after redirecting
-            }
-            return null; // Return null for other errors
-        }
-    } catch (error) {
-        console.error("Error getting access token:", error);
-        return null;
-    }
+          // If silent acquisition fails AND user is not logged in, redirect
+          if (error instanceof BrowserAuthError && error.errorCode === "interaction_required") {
+              console.log("Interaction required, redirecting to login.");
+              await instance.loginRedirect({
+                  ...silentRequest,
+                  redirectStartPage: window.location.href,
+              });
+              return null; // Important: Return null after redirecting
+          }
+          return null; // Return null for other errors
+      }
+  } catch (error) {
+      console.error("Error getting access token:", error);
+      return null;
+  }
 }
+
 
 // Logout from Microsoft
 export async function logoutFromMicrosoft() {
