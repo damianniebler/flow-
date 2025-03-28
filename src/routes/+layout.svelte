@@ -9,8 +9,6 @@
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { ensureInitialized } from '$lib/auth';
-  
-  // Add these imports for the notification system
   import { initNotificationService } from '$lib/services/notificationService';
   import EventNotification from '$lib/components/EventNotification.svelte';
 
@@ -100,7 +98,7 @@
 
 <LoadingScreen bind:isLoading />
 
-<!-- Add the EventNotification component here, outside of any containers -->
+<!-- Keep your existing EventNotification component -->
 <EventNotification />
 
 <div class="app">
