@@ -9,8 +9,10 @@
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { ensureInitialized } from '$lib/auth';
-  import { initNotificationService } from '$lib/services/notificationService';
+  import { initNotificationService, testNotification } from '$lib/services/notificationService';
   import EventNotification from '$lib/components/EventNotification.svelte';
+
+
 
   let isLoading = true;
 
@@ -106,6 +108,7 @@
   <div class="content">
     {#if $user}
       <Sidebar />
+      <button class="test-notification-btn" on:click={() => testNotification()}>Test Notification</button>
     {/if}
     <main>
       <slot />

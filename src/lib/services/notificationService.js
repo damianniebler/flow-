@@ -4,6 +4,12 @@ import { supabase } from '../../supabase';
 // Store for active notifications
 export const activeNotifications = writable([]);
 
+// Debug mode for testing - set to false in production
+const DEBUG_NOTIFICATIONS = true;
+
+// Store for pending notifications that should be shown when tab becomes visible
+const pendingNotifications = new Map();
+
 // Check for upcoming events and schedule notifications
 export async function initNotificationService(userId) {
   console.log(`Initializing notification service for user: ${userId}`);
@@ -34,9 +40,31 @@ export async function initNotificationService(userId) {
   // Run initial check
   await checkUpcomingEvents(userId);
   
-  // Set up periodic checking (every minute)
-  const intervalId = setInterval(() => checkUpcomingEvents(userId), 60000);
-  console.log(`Set up periodic event checking with interval ID: ${intervalId}`);
+  // Set up different checking strategies based on visibility
+  let checkInterval;
+  
+  const setupChecking = () => {
+    if (typeof document !== 'undefined') {
+      if (document.visibilityState === 'visible') {
+        // When visible, check every minute
+        if (checkInterval) clearInterval(checkInterval);
+        checkInterval = setInterval(() => checkUpcomingEvents(userId), 60000);
+        console.log("Set up visible tab checking interval (every minute)");
+        
+        // Process any pending notifications
+        processPendingNotifications();
+      } else {
+        // When hidden, check immediately and set a shorter interval (more frequent)
+        // This helps catch events even when the tab is in the background
+        if (checkInterval) clearInterval(checkInterval);
+        checkInterval = setInterval(() => checkUpcomingEvents(userId), 30000); // 30 seconds
+        console.log("Set up background tab checking interval (every 30 seconds)");
+      }
+    }
+  };
+  
+  // Initial setup
+  setupChecking();
   
   // Set up broadcast channel for cross-tab communication
   if (typeof BroadcastChannel !== 'undefined') {
@@ -58,6 +86,10 @@ export async function initNotificationService(userId) {
     document.addEventListener('visibilitychange', () => {
       const isVisible = document.visibilityState === 'visible';
       console.log(`Document visibility changed. Is visible: ${isVisible}`);
+      
+      // Update checking strategy
+      setupChecking();
+      
       if (isVisible) {
         // Re-check for notifications when tab becomes visible
         checkUpcomingEvents(userId);
@@ -65,6 +97,57 @@ export async function initNotificationService(userId) {
     });
     console.log("Document visibility change listener added");
   }
+  
+  // Try to register a service worker for more reliable notifications
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/notification-worker.js', {
+        scope: '/'
+      });
+      console.log('Service Worker registered with scope:', registration.scope);
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+    }
+  }
+}
+
+// Schedule a notification with the service worker
+export async function scheduleNotificationWithServiceWorker(notification) {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    console.log(`Scheduling notification with service worker: ${notification.title}`);
+    navigator.serviceWorker.controller.postMessage({
+      type: 'SCHEDULE_NOTIFICATION',
+      notification
+    });
+    return true;
+  } else {
+    console.warn('Service worker not available for scheduling notifications');
+    return false;
+  }
+}
+
+
+// Process any notifications that were queued while the tab was not visible
+function processPendingNotifications() {
+  console.log(`Processing ${pendingNotifications.size} pending notifications`);
+  
+  pendingNotifications.forEach((notification, id) => {
+    console.log(`Processing pending notification: ${notification.title} (ID: ${id})`);
+    
+    // Add to active notifications store for in-app display
+    activeNotifications.update(notifications => {
+      if (!notifications.find(n => n.id === notification.id)) {
+        return [...notifications, notification];
+      }
+      return notifications;
+    });
+    
+    // Play sound for pending notifications
+    playNotificationSound();
+    
+    // Remove from pending
+    pendingNotifications.delete(id);
+  });
 }
 
 // Check for events coming up in the next 5 minutes
@@ -132,10 +215,33 @@ async function checkUpcomingEvents(userId) {
 // Trigger notification across all tabs
 function triggerNotification(notification) {
   console.log(`Triggering notification for event: ${notification.title} (ID: ${notification.id})`);
-  
-  // Update store
-  activeNotifications.update(notifications => [...notifications, notification]);
-  
+
+  // Try to schedule with service worker first (for background notifications)
+  scheduleNotificationWithServiceWorker(notification).then(scheduled => {
+    if (!scheduled) {
+      // Fallback to browser notifications if service worker scheduling failed
+      showBrowserNotification(notification);
+    }
+  });
+
+  // Update store if tab is visible, otherwise queue for later
+  if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+    // Tab is visible, update store immediately
+    activeNotifications.update(notifications => {
+      if (!notifications.find(n => n.id === notification.id)) {
+        return [...notifications, notification];
+      }
+      return notifications;
+    });
+    
+    // Play sound
+    playNotificationSound();
+  } else {
+    // Tab is not visible, queue notification for when tab becomes visible
+    console.log(`Tab not visible, queueing notification: ${notification.title}`);
+    pendingNotifications.set(notification.id, notification);
+  }
+
   // Broadcast to other tabs
   if (typeof BroadcastChannel !== 'undefined') {
     console.log("Broadcasting notification to other tabs");
@@ -145,10 +251,8 @@ function triggerNotification(notification) {
       notification
     });
   }
-  
-  // Show notification in this tab
-  showNotification(notification);
 }
+
 
 // Show notification UI and play sound
 export function showNotification(notification) {
@@ -167,16 +271,17 @@ export function showNotification(notification) {
   // Play notification sound with improved reliability
   playNotificationSound();
   
-  // Show browser notification if tab is not visible
+  // Always show browser notification for important events (5 min window is important)
+  // or when tab is not visible, or in debug mode
   if (typeof document !== 'undefined') {
     const isVisible = document.visibilityState === 'visible';
     console.log(`Current document visibility: ${document.visibilityState}`);
     
-    if (!isVisible) {
-      console.log("Tab not visible, showing browser notification");
+    if (!isVisible || DEBUG_NOTIFICATIONS) {
+      console.log("Showing browser notification (debug mode or tab not visible)");
       showBrowserNotification(notification);
     } else {
-      console.log("Tab is visible, not showing browser notification");
+      console.log("Tab is visible and not in debug mode, not showing browser notification");
     }
   }
 }
@@ -237,13 +342,18 @@ function showBrowserNotification(notification) {
   }
 }
 
-
 // Dismiss a notification
 export function dismissNotification(notificationId) {
   console.log(`Dismissing notification with ID: ${notificationId}`);
-  activeNotifications.update(notifications => 
+  activeNotifications.update(notifications =>
     notifications.filter(n => n.id !== notificationId)
   );
+  
+  // Also remove from pending if it exists
+  if (pendingNotifications.has(notificationId)) {
+    pendingNotifications.delete(notificationId);
+    console.log(`Removed notification ${notificationId} from pending queue`);
+  }
 }
 
 // Play notification sound with improved reliability
@@ -305,4 +415,21 @@ function playNotificationSound() {
   } catch (error) {
     console.error("Error in playNotificationSound function:", error);
   }
+}
+
+// For testing purposes - manually trigger a test notification
+export function testNotification() {
+  const testNotif = {
+    id: 'test-' + Date.now(),
+    title: 'Test Notification',
+    start: new Date(Date.now() + 5 * 60000),
+    location: 'Test Location',
+    entityId: '123'
+  };
+  
+  console.log("Manually triggering test notification");
+  showBrowserNotification(testNotif);
+  showNotification(testNotif);
+  
+  return "Test notification triggered";
 }
