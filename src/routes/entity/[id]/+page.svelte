@@ -296,6 +296,36 @@ async function updateItemNoteWithoutTimestamp() {
   }
 }
 
+function getTimestampColor(timestamp) {
+  const now = new Date();
+  const updated = new Date(timestamp);
+  const diffInHours = (now - updated) / (1000 * 60 * 60);
+  
+  // Use a logarithmic scale to emphasize recent changes
+  // This will make the first 24 hours show more color variation
+  let normalizedDiff;
+  
+  if (diffInHours <= 24) {
+    // For the first 24 hours, use a steeper gradient (0 to 0.5 of our color range)
+    normalizedDiff = (diffInHours / 24) * 0.5;
+  } else {
+    // For 1-14 days, use the remaining color range (0.5 to 1.0)
+    const diffInDays = Math.min(diffInHours / 24, 14);
+    normalizedDiff = 0.5 + ((diffInDays - 1) / 13) * 0.5;
+  }
+  
+  // HSL color model: from dark green (120°) to red (0°)
+  // Adjust saturation and lightness for better visibility
+  const hue = 120 * (1 - normalizedDiff);
+  
+  // Make newer items darker green and gradually lighten as they age
+  const saturation = 100;
+  const lightness = 30 + (normalizedDiff * 20); // 30% to 50% lightness
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+
 
 function handleOptionClick(action) {
   if (action === 'open') {
@@ -347,18 +377,20 @@ function handleOptionClick(action) {
     {#each incompleteTasks as item (item.id)}
       <li class="item">
         <div class="item-content">
-          <button on:click={() => toggleItemCompletion(item)} class="complete-btn">
+          <button on:click={() => toggleItemCompletion(item)} class="complete-btn" 
+                  style="color: {getTimestampColor(item.last_updated)}">
             <i class="fas fa-check"></i>
           </button>
           
           <span class="item-name">{item.name}</span>
-          <span class="last-updated">Updated {formatRelativeTime(item.last_updated)}</span>
+          <span class="last-updated" style="color: {getTimestampColor(item.last_updated)}">
+            Updated {formatRelativeTime(item.last_updated)}
+          </span>
           <button on:click={() => updateTimestamp(item)} class="update-timestamp-btn">
             <i class="fas fa-sync-alt"></i>
           </button>          
           <button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
           <button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
-          
         </div>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
