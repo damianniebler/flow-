@@ -17,18 +17,31 @@
   $: entityId = $page.params.id;
   $: incompleteTasks = items.filter(item => !item.completed);
   $: completedTasks = items.filter(item => item.completed);
+  $: itemId = $page.url.searchParams.get('itemId');
 
-  onMount(() => {
-  loadEntityAndItems();
+// Modify your onMount function to handle opening the note for the specified item
+onMount(() => {
+  loadEntityAndItems().then(() => {
+    // Check if we need to open a specific item's note
+    if (itemId) {
+      const itemToOpen = items.find(item => item.id.toString() === itemId);
+      if (itemToOpen) {
+        openNoteSidebar(itemToOpen);
+      }
+    }
+  });
+  
   if (window.tutorial && window.tutorial.currentStep === 5) {
     window.tutorial.currentStepSet[5].action();
   }
+  
   window.addEventListener('click', (e) => {
     if (showPopup && !e.target.closest('.options-popup') && !e.target.closest('.note-link')) {
       showPopup = false;
     }
   });
 });
+
 
   function goBackToFolder() {
     if (folderId) {
@@ -188,6 +201,20 @@
   }
 }
 
+async function toggleImportant(item) {
+  const { error } = await supabase
+    .from('items')
+    .update({ important: !item.important })
+    .eq('id', item.id);
+
+  if (error) {
+    console.error('Error updating item importance:', error);
+  } else {
+    item.important = !item.important;
+    items = [...items];
+  }
+}
+
 async function openNoteSidebar(item) {
     selectedItem = item;
     showNoteSidebar = true;
@@ -301,26 +328,19 @@ function getTimestampColor(timestamp) {
   const updated = new Date(timestamp);
   const diffInHours = (now - updated) / (1000 * 60 * 60);
   
-  // Use a logarithmic scale to emphasize recent changes
-  // This will make the first 24 hours show more color variation
   let normalizedDiff;
   
   if (diffInHours <= 24) {
-    // For the first 24 hours, use a steeper gradient (0 to 0.5 of our color range)
     normalizedDiff = (diffInHours / 24) * 0.5;
   } else {
-    // For 1-14 days, use the remaining color range (0.5 to 1.0)
     const diffInDays = Math.min(diffInHours / 24, 14);
     normalizedDiff = 0.5 + ((diffInDays - 1) / 13) * 0.5;
   }
   
-  // HSL color model: from dark green (120°) to red (0°)
-  // Adjust saturation and lightness for better visibility
   const hue = 120 * (1 - normalizedDiff);
   
-  // Make newer items darker green and gradually lighten as they age
   const saturation = 100;
-  const lightness = 30 + (normalizedDiff * 20); // 30% to 50% lightness
+  const lightness = 30 + (normalizedDiff * 20);
   
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
@@ -391,6 +411,13 @@ function handleOptionClick(action) {
           </button>          
           <button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
           <button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
+          <button class="btn-icon" on:click={() => toggleImportant(item)}>
+            {#if item.important}
+              <span style="color: gold;">★</span>
+            {:else}
+              <span style="color: gray;">☆</span>
+            {/if}
+          </button>
         </div>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->

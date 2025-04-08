@@ -1407,3 +1407,100 @@ textarea::-webkit-scrollbar {
 .folder-list li.drag-over {
   border-top: 2px solid var(--button-bg);
 }
+
+.important-tasks-section {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.important-tasks-section h2 {
+  color: #e63946;
+  margin-bottom: 1rem;
+}
+
+.important-tasks-list {
+  list-style: none;
+  padding: 0;
+}
+
+.important-task-item {
+  margin-bottom: 0.75rem;
+}
+
+.task-card {
+  padding: 0.75rem;
+  background-color: white;
+  border-radius: 6px;
+  border-left: 4px solid #e63946;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.task-name {
+  font-weight: bold;
+}
+
+.important-star {
+  color: gold;
+}
+
+.task-entity {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.task-note {
+  font-size: 0.9rem;
+  color: #444;
+  font-style: italic;
+}
+
+.dark-mode .important-tasks-section {
+  background-color: #2a2a2a;
+}
+
+.dark-mode .task-card {
+  background-color: #333;
+  border-left: 4px solid #e63946;
+}
+
+.dark-mode .task-entity {
+  color: #aaa;
+}
+
+.dark-mode .task-note {
+  color: #ccc;
+}
+
+.logo {
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s;
+}
+
+.logo:hover {
+  opacity: 0.8;
+}
+
+.logo:focus {
+  outline: 2px solid rgba(0, 123, 255, 0.5);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

@@ -2,9 +2,14 @@
     import { user, signOut } from '$lib/auth';
     import { sidebarVisible } from '$lib/stores/sidebarStore';
     import FeedbackPopup from '$lib/components/FeedbackPopup.svelte';
+    import { goto } from '$app/navigation';
     
     const handleSignOut = () => signOut();
     const toggleSidebar = () => sidebarVisible.update(v => !v);
+    
+    const navigateToHome = () => {
+        goto('/');
+    };
 
     const startTutorial = () => {
         sidebarVisible.set(true);
@@ -36,7 +41,8 @@
                 ▶
             {/if}
         </button>
-        <div class="logo">Flowscend</div>
+        <!-- Make the logo clickable -->
+        <div class="logo" on:click={navigateToHome} role="button" tabindex="0" on:keydown={(e) => e.key === 'Enter' && navigateToHome()}>Flowscend</div>
         <button class="hamburger-menu" on:click={toggleMenu}>
             <i class="fas fa-bars"></i>
         </button>

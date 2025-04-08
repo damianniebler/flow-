@@ -522,6 +522,5 @@ async function createEntity(sectionId, entityName) {
   
     <button type="button" id="btn-create-section" class="button" on:click={createSection}>Create Section</button>
   </form>
-  
 </div>
 {/if}
