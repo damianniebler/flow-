@@ -6,6 +6,7 @@
 
   let firstName = '';
   let importantTasks = [];
+  let isNameLoaded = false; // Add this flag to track when name is loaded
 
   onMount(async () => {
     const currentUser = await getCurrentUser();
@@ -16,6 +17,7 @@
         .eq('id', currentUser.id)
         .single();
       firstName = data.first_name;
+      isNameLoaded = true; // Set flag to true after name is loaded
       
       // Fetch important tasks
       const { data: tasksData, error } = await supabase
@@ -36,14 +38,17 @@
   });
   
   function navigateToEntity(entityId, itemId) {
-  goto(`/entity/${entityId}?itemId=${itemId}`);
-}
+    goto(`/entity/${entityId}?itemId=${itemId}`);
+  }
 </script>
 
-<h1>Welcome {firstName}!</h1>
-<p>
-  We're ready to help you stay on top of your day.
-</p>
+<!-- Only show welcome message when name is loaded -->
+{#if isNameLoaded}
+  <h1>Welcome {firstName}!</h1>
+  <p>
+    We're ready to help you stay on top of your day.
+  </p>
+{/if}
 
 {#if importantTasks.length > 0}
   <div class="important-tasks-section">

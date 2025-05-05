@@ -31,6 +31,8 @@
 
   async function loadData() {
     isLoading = true;
+    const start = Date.now();
+
     const [userData, entitiesData] = await Promise.all([
       supabase
         .from('users')
@@ -47,6 +49,12 @@
     if (entitiesData.data) {
       entities = entitiesData.data;
     }
+
+    const elapsed = Date.now() - start;
+    if (elapsed < 1000) {
+      await new Promise(resolve => setTimeout(resolve, 500 - elapsed));
+    }
+
     isLoading = false;
   }
 

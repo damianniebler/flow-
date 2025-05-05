@@ -4,12 +4,13 @@
   import Sidebar from '$lib/components/Sidebar.svelte';
   import LoadingScreen from '$lib/components/LoadingScreen.svelte';
   import { getCurrentUser, user } from '$lib/auth';
-  import { sidebarVisible, darkMode } from '$lib/stores/sidebarStore';
+  import { sidebarVisible, darkMode, overlayShown } from '$lib/stores/sidebarStore';
   import '../app.css';
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
 
-  let isLoading = true;
+  let isLoading = false;
+  let hasShownOverlayLocally = false;
 
   onMount(() => {
     getCurrentUser();
@@ -22,7 +23,7 @@
         sidebarVisible.set(true);
       }
     });
-    
+
     if (browser) {
       const savedMode = localStorage.getItem('darkMode');
       if (savedMode) {
@@ -38,12 +39,37 @@
         script.src = '/tutorial.js';
         document.body.appendChild(script);
       }
+      
+      // Check if we've shown the overlay before
+      const hasShownOverlay = localStorage.getItem('overlayShown') === 'true';
+      
+      if (!hasShownOverlay && $page.url.pathname !== '/notepad') {
+        isLoading = true;
+        hasShownOverlayLocally = true;
+        localStorage.setItem('overlayShown', 'true');
+        
+        setTimeout(() => {
+          isLoading = false;
+          overlayShown.set(true);
+        }, 1500);
+      } else {
+        // Already shown before
+        overlayShown.set(true);
+      }
     }
+  });
+  
+  // Instead of the previous reactive statement, use this:
+  $: if (browser && !hasShownOverlayLocally && !$overlayShown && $page.url.pathname !== '/notepad') {
+    isLoading = true;
+    hasShownOverlayLocally = true;
     
     setTimeout(() => {
       isLoading = false;
+      overlayShown.set(true);
+      localStorage.setItem('overlayShown', 'true');
     }, 1500);
-  });
+  }
 
   $: if ($user) {
     document.dispatchEvent(new Event('UserLoggedIn'));
@@ -60,7 +86,10 @@
   }
 </script>
 
-<LoadingScreen bind:isLoading />
+{#if $page.url.pathname !== '/notepad' && isLoading}
+  <LoadingScreen bind:isLoading />
+{/if}
+
 
 <div class="app">
   <Header />

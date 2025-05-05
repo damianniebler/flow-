@@ -157,27 +157,33 @@
   }
 
   async function loadFolders() {
-  isLoading = true;
-  try {
-    const { data, error } = await supabase
-      .from('folders')
-      .select('*')
-      .eq('user_id', $user.id)
-      .order('display_order', { ascending: true });
+    isLoading = true;
+    const start = Date.now();
 
-    if (error) {
-      console.error('Error loading folders:', error);
-      return;
+    try {
+      const { data, error } = await supabase
+        .from('folders')
+        .select('*')
+        .eq('user_id', $user.id)
+        .order('display_order', { ascending: true });
+
+      if (error) {
+        console.error('Error loading folders:', error);
+        return;
+      }
+
+      console.log('Loaded folders with order:', data);
+      folders = data;
+    } catch (error) {
+      console.error('Error loading folder data:', error);
+    } finally {
+      const elapsed = Date.now() - start;
+      if (elapsed < 500) {
+        await new Promise(resolve => setTimeout(resolve, 500 - elapsed));
+      }
+      isLoading = false;
     }
-
-    console.log('Loaded folders with order:', data);
-    folders = data;
-  } catch (error) {
-    console.error('Error loading folder data:', error);
-  } finally {
-    isLoading = false;
   }
-}
 
   async function createFolder() {
     if (newFolderName.trim() && $user) {
