@@ -25,7 +25,7 @@
         .select('*, entities(name, id)')
         .eq('important', true)
         .eq('completed', false)
-        .order('last_updated', { ascending: false });
+        .order('last_updated', { ascending: true });
         
       if (error) {
         console.error('Error fetching important tasks:', error);
