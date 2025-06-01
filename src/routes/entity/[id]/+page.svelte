@@ -504,7 +504,16 @@ Click to add a note
 
 <div class="note-sidebar" class:open={showNoteSidebar}>
   {#if selectedItem}
-    <h2>{selectedItem.name}</h2>
+    <div class="note-sidebar-header">
+      <h2>{selectedItem.name}</h2>
+      <button class="sidebar-star-btn" on:click={() => toggleImportant(selectedItem)}>
+        {#if selectedItem.important}
+          <span style="color: gold; font-size: 1.5rem;">★</span>
+        {:else}
+          <span style="color: gray; font-size: 1.5rem;">☆</span>
+        {/if}
+      </button>
+    </div>
     <h3>Note</h3>
     <textarea id="note-area" bind:value={selectedItem.note} on:keydown={handleKeydown}></textarea>
     <div class="note-sidebar-buttons">

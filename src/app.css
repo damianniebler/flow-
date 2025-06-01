@@ -1504,3 +1504,29 @@ textarea::-webkit-scrollbar {
   outline-offset: 2px;
   border-radius: 2px;
 }
+
+.note-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.note-sidebar-header h2 {
+  margin: 0;
+  flex: 1;
+}
+
+.sidebar-star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-star-btn:hover {
+  opacity: 0.8;
+}
