@@ -1592,30 +1592,43 @@ textarea::-webkit-scrollbar {
 .search-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 1.5rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    justify-content: center;
+    padding: 1.2rem 1rem 0.3rem 1rem;
+    background: none;             /* Remove background */
+    border-bottom: none;          /* Remove border */
+    position: relative;
 }
 
 .search-header h2 {
-    margin: 0;
+    margin: 0 auto;
     color: var(--text-color);
-    font-size: 1.5rem;
+    font-size: 1.45rem;
+    font-weight: 700;
+    text-align: center;
+    flex: 1;
+    background: none;             /* Just in case */
+    line-height: 1.2;
+    letter-spacing: 0.01em;
 }
 
 .close-search {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
     background: none;
     border: none;
     color: var(--text-color);
     font-size: 1.2rem;
     cursor: pointer;
-    padding: 0.5rem;
+    padding: 0.4rem;
     border-radius: 50%;
-    transition: background-color 0.2s;
+    transition: background 0.18s, color 0.15s;
 }
 
 .close-search:hover {
     background: var(--bg-color);
+    color: #fff;
 }
 
 .search-container {
@@ -1633,14 +1646,14 @@ textarea::-webkit-scrollbar {
 
 .search-input {
     width: 100%;
-    padding: 12px 40px 12px 16px;
+    padding: 12px 44px 12px 16px; /* right = at least 44px for icon spacing */
     border: 2px solid var(--button-bg);
     border-radius: 25px;
     background-color: var(--bg-color);
     color: var(--text-color);
     font-size: 16px;
-    transition: box-shadow 0.2s;
     box-sizing: border-box;
+    height: 44px; /* This can help with exact centering, tweak as needed */
 }
 
 .search-input:focus {
@@ -1650,19 +1663,21 @@ textarea::-webkit-scrollbar {
 
 .search-icon {
     position: absolute;
-    right: 16px;
+    right: 20px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-70%);
     color: var(--button-bg);
+    font-size: 1.2rem;
     pointer-events: none;
+    line-height: 1;
+    height: 20px;
+    width: 20px;
 }
 
 .search-results {
     position: relative;
     background: var(--section-bg);
-    border: 1px solid var(--button-bg);
     border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     max-height: 300px;
     overflow-y: auto;
     z-index: 1000;
@@ -1734,7 +1749,6 @@ textarea::-webkit-scrollbar {
 .dark-mode .search-results {
     background: #232323;
     border-color: #4F46E5;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 
 .dark-mode .search-result-name,
@@ -1767,4 +1781,26 @@ textarea::-webkit-scrollbar {
         left: -10px;
         right: -10px;
     }
+}
+
+/* Custom scrollbar styling for search results */
+.search-results::-webkit-scrollbar {
+  width: 12px;
+}
+
+.search-results::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-radius: 8px;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background: var(--button-bg);
+  border-radius: 8px;
+  border: 3px solid var(--bg-color);
+}
+
+/* Firefox scrollbar styling for search results */
+.search-results {
+  scrollbar-width: thin;
+  scrollbar-color: var(--button-bg) var(--bg-color);
 }

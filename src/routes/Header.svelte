@@ -132,27 +132,35 @@ function fuzzyMatch(text, query) {
         goto(`/entity/${item.entity_id}?itemId=${item.id}`);
     }
 
-    onMount(() => {
-        function handleClickOutside(event) {
-            if (!event.target.closest('.search-modal')) {
-                showSearchResults = false;
-            }
+onMount(() => {
+    function handleClickOutside(event) {
+        if (!event.target.closest('.search-modal')) {
+            showSearchResults = false;
         }
+    }
 
-        function handleKeydown(event) {
-            if (event.key === 'Escape' && showSearchOverlay) {
+    function handleKeydown(event) {
+        // Existing Escape handler
+        if (event.key === 'Escape' && showSearchOverlay) {
+            toggleSearch();
+        }
+        // New: Ctrl+Q handler
+        if ((event.ctrlKey || event.metaKey) && (event.key === 'q' || event.key === 'Q')) {
+            event.preventDefault();
+            if (!showSearchOverlay) {
                 toggleSearch();
             }
         }
+    }
 
-        document.addEventListener('click', handleClickOutside);
-        document.addEventListener('keydown', handleKeydown);
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleKeydown);
 
-        return () => {
-            document.removeEventListener('click', handleClickOutside);
-            document.removeEventListener('keydown', handleKeydown);
-        };
-    });
+    return () => {
+        document.removeEventListener('click', handleClickOutside);
+        document.removeEventListener('keydown', handleKeydown);
+    };
+});
 </script>
 
 {#if $user}
