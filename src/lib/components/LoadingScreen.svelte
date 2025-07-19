@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   
+<<<<<<< HEAD
   export let isLoading = true;
   
   onMount(() => {
@@ -32,3 +33,11 @@
     <div class="loading-progress"></div>
   </div>
 </div>
+=======
+  <div class="loading-screen" class:hide={!isLoading}>
+    <div class="logo">Flowscend</div>
+    <div class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+  </div>
+>>>>>>> dev

@@ -6,6 +6,7 @@
   import '../../../app.css';
   import LinkOptionsPopup from '$lib/components/LinkOptionsPopup.svelte';
   import { browser } from '$app/environment';
+  import EntityCalendar from '$lib/components/EntityCalendar.svelte';
 
   let entity = null;
   let items = [];
@@ -356,6 +357,11 @@ function handleOptionClick(action) {
   showPopup = false;
 }
 </script>
+<!-- Add the calendar component -->
+<div class="entity-calendar-section">
+  <h2>Calendar Integration</h2>
+  <EntityCalendar {entityId} />
+</div>
 {#if isLoading && (!browser || !window.tutorial || !window.tutorial.currentStep)}
   <div class="folder-view skeleton">
     <div class="skeleton-header"></div>

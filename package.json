@@ -27,6 +27,9 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@auth/core": "^0.38.0",
+		"@auth/sveltekit": "^1.8.0",
+		"@azure/msal-browser": "^4.7.0",
 		"@supabase/supabase-js": "^2.45.4",
 		"esbuild": "^0.20.2",
 		"lodash": "^4.17.21",
