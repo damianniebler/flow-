@@ -85,7 +85,7 @@ const msalConfig = {
   auth: {
     clientId: MICROSOFT_CLIENT_ID,
     authority: "https://login.microsoftonline.com/common",
-    redirectUri: typeof window !== 'undefined' ? `${window.location.origin}` : '', // Ensure exact match
+redirectUri: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
     navigateToLoginRequestUrl: false // Change to false to simplify redirect handling
   },
   cache: {

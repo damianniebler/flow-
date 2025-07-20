@@ -1,5 +1,8 @@
 import { writable } from 'svelte/store';
 import { supabase } from '../../supabase';
+import { appWindow } from '@tauri-apps/api/window';
+import { sendNotification } from '@tauri-apps/api/notification';
+
 
 // Store for active notifications
 export const activeNotifications = writable([]);
@@ -9,6 +12,10 @@ const DEBUG_NOTIFICATIONS = true;
 
 // Store for pending notifications that should be shown when tab becomes visible
 const pendingNotifications = new Map();
+
+function isTauri() {
+  return typeof window !== "undefined" && "__TAURI__" in window;
+}
 
 // Check for upcoming events and schedule notifications
 export async function initNotificationService(userId) {
@@ -143,12 +150,42 @@ function processPendingNotifications() {
     });
     
     // Play sound for pending notifications
-    playNotificationSound();
+    focusWindowAndPlaySound();
     
     // Remove from pending
     pendingNotifications.delete(id);
   });
 }
+
+async function focusWindowAndPlaySound() {
+  if (isTauri()) {
+    try {
+      await appWindow.show();
+      await appWindow.setFocus();
+      playNotificationSound();
+    } catch (err) {
+      console.error('Tauri: Could not focus window:', err);
+      playNotificationSound(); // fallback for browser
+    }
+  } else {
+    playNotificationSound();
+  }
+}
+
+
+
+async function notifyEvent(notification) {
+  await focusWindowAndPlaySound();
+  if (isTauri()) {
+    sendNotification({
+      title: `Event: ${notification.title}`,
+      body: `Starts at ${notification.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+    });
+  } else {
+    showBrowserNotification(notification);
+  }
+}
+
 
 // Check for events coming up in the next 5 minutes
 async function checkUpcomingEvents(userId) {
@@ -235,7 +272,7 @@ function triggerNotification(notification) {
     });
     
     // Play sound
-    playNotificationSound();
+    focusWindowAndPlaySound();
   } else {
     // Tab is not visible, queue notification for when tab becomes visible
     console.log(`Tab not visible, queueing notification: ${notification.title}`);
@@ -269,7 +306,7 @@ export function showNotification(notification) {
   });
   
   // Play notification sound with improved reliability
-  playNotificationSound();
+  focusWindowAndPlaySound();
   
   // Always show browser notification for important events (5 min window is important)
   // or when tab is not visible, or in debug mode
