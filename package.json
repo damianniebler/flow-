@@ -31,7 +31,7 @@
 		"@auth/sveltekit": "^1.8.0",
 		"@azure/msal-browser": "^4.7.0",
 		"@supabase/supabase-js": "^2.45.4",
-		"@tauri-apps/api": "^2.6.0",
+		"@tauri-apps/api": "^1.6.0",
 		"esbuild": "^0.20.2",
 		"lodash": "^4.17.21",
 		"svelte-dnd-action": "^0.9.50"
