@@ -13,11 +13,11 @@ function createWindow() {
 	// Register a custom protocol to serve files from the build directory. This
 	// avoids "Not allowed to load local resource" errors when loading the app
 	// from the file system.
-	protocol.registerFileProtocol('app', (request, callback) => {
-		const url = request.url.slice('app://'.length);
-		const target = path.join(__dirname, '../build', url);
-		callback({ path: target });
-	});
+       protocol.registerFileProtocol('app', (request, callback) => {
+               const urlPath = request.url.replace('app://', '').replace(/^\/+/, '');
+               const target = path.join(__dirname, '../build', urlPath);
+               callback({ path: target });
+       });
 
 	// Load the built SvelteKit app using the custom protocol
 	win.loadURL('app://index.html');

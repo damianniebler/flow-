@@ -18,7 +18,7 @@
         isMenuOpen = false;
 
         if (!window.tutorial) {
-           window.tutorial = new Tutorial();
+           window.tutorial = new window.Tutorial();
         }
         window.tutorial.start(true);
     };

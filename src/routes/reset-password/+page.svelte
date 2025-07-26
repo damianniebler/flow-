@@ -37,7 +37,7 @@
     }
 
     try {
-        const { data, error: updateError } = await supabase.auth.updateUser({
+        const { error: updateError } = await supabase.auth.updateUser({
             password: newPassword
         });
 

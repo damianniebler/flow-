@@ -2,14 +2,12 @@
   import { supabase } from '../../supabase';
   import { onMount } from 'svelte';
   import { user } from '$lib/auth';
-  import { writable } from 'svelte/store';
   import { browser } from '$app/environment';
   import { sidebarVisible, newFolderId } from '$lib/stores/sidebarStore';
   import '../../app.css';
   import { tick } from 'svelte';
   import { darkMode } from '$lib/stores/sidebarStore';
   import { afterUpdate } from 'svelte';
-  import { spring } from 'svelte/motion';
 
   let isLoading = true;
   let folders = [];
@@ -18,13 +16,11 @@
   let dragOverIndex = -1;
 
   let touchStartY = 0;
-  let touchStartX = 0;
   let touchedElement = null;
   let touchedIndex = -1;
   let touchActive = false;
   let yOffset = 0;
   let folderElements = [];
-  let folderHeight = 0;
 
   $: if ($user) {
     loadFolders();
@@ -74,12 +70,10 @@
       touchedElement = event.currentTarget;
       touchedIndex = index;
       touchStartY = event.touches[0].clientY;
-      touchStartX = event.touches[0].clientX;
       draggedFolder = folder;
       
       // Get element dimensions
       const rect = touchedElement.getBoundingClientRect();
-      folderHeight = rect.height;
       
       // Apply visual feedback
       touchedElement.classList.add('dragging');
@@ -125,7 +119,7 @@
   }
   
   // Function to handle touch end
-  function handleTouchEnd(event) {
+  function handleTouchEnd() {
     if (!touchActive) return;
     
     touchActive = false;
@@ -146,7 +140,7 @@
       folders = updatedFolders;
       
       // Update database
-      updateFolderOrder(draggedFolder.id, dragOverIndex);
+      updateFolderOrder();
     }
     
     // Reset variables
@@ -260,7 +254,7 @@
     }
   }
 
-  function handleDragStart(event, folder, index) {
+  function handleDragStart(event, folder) {
     draggedFolder = folder;
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', folder.id);
@@ -304,10 +298,10 @@
     folders = updatedFolders;
     dragOverIndex = -1;
 
-    await updateFolderOrder(draggedFolder.id, targetIndex);
+    await updateFolderOrder();
   }
 
-  async function updateFolderOrder(folderId, newIndex) {
+  async function updateFolderOrder() {
     try {
       await reorderFolders();
     } catch (error) {
@@ -357,7 +351,7 @@
           <li
             class:drag-over={dragOverIndex === index}
             draggable="true"
-            on:dragstart={(e) => handleDragStart(e, folder, index)}
+          on:dragstart={(e) => handleDragStart(e, folder)}
             on:dragend={handleDragEnd}
             on:dragover={(e) => handleDragOver(e, index)}
             on:dragleave={handleDragLeave}

@@ -46,7 +46,6 @@
     setTimeout(() => {
       try {
         // If running under Electron, attempt to flash the taskbar icon
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { remote } = window.require?.('electron') ?? {};
         if (remote) {
           const currentWindow = remote.getCurrentWindow();

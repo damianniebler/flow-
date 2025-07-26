@@ -18,8 +18,6 @@
   let buttonPosition = { top: 0, left: 0 };
   let textareaElement = null;
   let isSelecting = false;
-  let touchStartY = 0;
-  let touchStartX = 0;
   let selectionChangeTimeout;
   let mirrorDiv;
 
@@ -65,8 +63,7 @@
   function handleInteractionStart(event) {
     if (event.type === 'touchstart') {
       const touch = event.touches[0];
-      touchStartY = touch.clientY;
-      touchStartX = touch.clientX;
+      /* capture position */
     }
     if (event.target === textareaElement) {
       isSelecting = true;
