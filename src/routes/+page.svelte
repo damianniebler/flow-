@@ -40,6 +40,40 @@
   function navigateToEntity(entityId, itemId) {
     goto(`/entity/${entityId}?itemId=${itemId}`);
   }
+
+    // Trigger a notification or flash the app icon after a delay
+  function startNotificationTest() {
+    setTimeout(() => {
+      try {
+        // If running under Electron, attempt to flash the taskbar icon
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { remote } = window.require?.('electron') ?? {};
+        if (remote) {
+          const currentWindow = remote.getCurrentWindow();
+          currentWindow.flashFrame(true);
+          currentWindow.focus();
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
+
+      // Fallback to the browser Notification API
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('Flow', { body: 'Time to check the app!' });
+          window.focus();
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+              new Notification('Flow', { body: 'Time to check the app!' });
+              window.focus();
+            }
+          });
+        }
+      }
+    }, 10000);
+  }
 </script>
 
 <!-- Only show welcome message when name is loaded -->
@@ -72,6 +106,9 @@
           </div>
         </li>
       {/each}
-    </ul>
-  </div>
-{/if}
+      </ul>
+      <button class="notify-test-button" on:click={startNotificationTest}>
+        Test notification
+      </button>
+    </div>
+  {/if}
