@@ -1,0 +1,1 @@
+export const MICROSOFT_CLIENT_ID = 'c5f40f0e-1722-4de0-9ae9-508c6d79249b';

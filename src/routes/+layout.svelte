@@ -1,105 +1,129 @@
 <script>
-  import { onMount } from 'svelte';
-  import Header from './Header.svelte';
-  import Sidebar from '$lib/components/Sidebar.svelte';
-  import LoadingScreen from '$lib/components/LoadingScreen.svelte';
-  import { getCurrentUser, user } from '$lib/auth';
-  import { sidebarVisible, darkMode, overlayShown } from '$lib/stores/sidebarStore';
-  import '../app.css';
-  import { browser } from '$app/environment';
-  import { page } from '$app/stores';
+	import { onMount } from 'svelte';
+	import Header from './Header.svelte';
+	import Sidebar from '$lib/components/Sidebar.svelte';
+	import LoadingScreen from '$lib/components/LoadingScreen.svelte';
+	import { getCurrentUser, user } from '$lib/auth';
+	import { sidebarVisible, darkMode, overlayShown } from '$lib/stores/sidebarStore';
+	import '../app.css';
+	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
+	import { initCalendarService } from '$lib/services/calendarService';
 
-  let isLoading = false;
-  let hasShownOverlayLocally = false;
+	// --- NEW: Imports for the event listener and popup ---
+	import { listen } from '@tauri-apps/api/event';
+  import { popupStore } from '$lib/stores/popupStore.js';
+	import EventPopup from '$lib/components/EventPopup.svelte';
 
-  onMount(() => {
-    getCurrentUser();
-    if (window.innerWidth <= 768) {
-        sidebarVisible.set(false);
-    }
+	let isLoading = false;
+	let hasShownOverlayLocally = false;
 
-    document.addEventListener('SidebarShowRequest', () => {
-      if (window.innerWidth <= 768) {
-        sidebarVisible.set(true);
-      }
-    });
+	// The onMount function needs to be async to set up the listener
+	onMount(async () => {
+		getCurrentUser();
+		if (window.innerWidth <= 768) {
+			sidebarVisible.set(false);
+		}
 
-    if (browser) {
-      const savedMode = localStorage.getItem('darkMode');
-      if (savedMode) {
-        darkMode.set(savedMode === 'true');
-      }
+		document.addEventListener('SidebarShowRequest', () => {
+			if (window.innerWidth <= 768) {
+				sidebarVisible.set(true);
+			}
+		});
 
-      darkMode.subscribe(value => {
-        localStorage.setItem('darkMode', value.toString());
-      });
+		if (browser) {
+			// --- NEW: Listen for the 'event-starting-soon' event from Rust ---
+			const unlisten = await listen('event-starting-soon', (event) => {
+				console.log('Received event from Rust:', event.payload);
+				// Update the store to show the popup with the event title
+				popupStore.set({ visible: true, title: event.payload.title });
+			});
 
-      if (!$page.url.pathname.includes('reset-password')) {
-        const script = document.createElement('script');
-        script.src = '/tutorial.js';
-        document.body.appendChild(script);
-      }
-      
-      // Check if we've shown the overlay before
-      const hasShownOverlay = localStorage.getItem('overlayShown') === 'true';
-      
-      if (!hasShownOverlay && $page.url.pathname !== '/notepad') {
-        isLoading = true;
-        hasShownOverlayLocally = true;
-        localStorage.setItem('overlayShown', 'true');
-        
-        setTimeout(() => {
-          isLoading = false;
-          overlayShown.set(true);
-        }, 1500);
-      } else {
-        // Already shown before
-        overlayShown.set(true);
-      }
-    }
-  });
-  
-  // Instead of the previous reactive statement, use this:
-  $: if (browser && !hasShownOverlayLocally && !$overlayShown && $page.url.pathname !== '/notepad') {
-    isLoading = true;
-    hasShownOverlayLocally = true;
-    
-    setTimeout(() => {
-      isLoading = false;
-      overlayShown.set(true);
-      localStorage.setItem('overlayShown', 'true');
-    }, 1500);
-  }
+			const savedMode = localStorage.getItem('darkMode');
+			if (savedMode) {
+				darkMode.set(savedMode === 'true');
+			}
 
-  $: if ($user) {
-    document.dispatchEvent(new Event('UserLoggedIn'));
-  }
+			darkMode.subscribe((value) => {
+				localStorage.setItem('darkMode', value.toString());
+			});
 
-  $: if (browser) {
-    $darkMode
-      ? document.body.classList.add('dark-mode')
-      : document.body.classList.remove('dark-mode');
-  }
+			if (!$page.url.pathname.includes('reset-password')) {
+				const script = document.createElement('script');
+				script.src = '/tutorial.js';
+				document.body.appendChild(script);
+			}
 
-  $: if (browser && window.innerWidth <= 768 && $page) {
-    sidebarVisible.set(false);
-  }
+			const hasShownOverlay = localStorage.getItem('overlayShown') === 'true';
+			if (!hasShownOverlay && $page.url.pathname !== '/notepad') {
+				isLoading = true;
+				hasShownOverlayLocally = true;
+				localStorage.setItem('overlayShown', 'true');
+				setTimeout(() => {
+					isLoading = false;
+					overlayShown.set(true);
+				}, 1500);
+			} else {
+				overlayShown.set(true);
+			}
+
+			// NEW: Return a cleanup function for the listener
+			return () => {
+				unlisten();
+			};
+		}
+	});
+
+	// Your existing reactive statements are perfect
+	$: if (
+		browser &&
+		!hasShownOverlayLocally &&
+		!$overlayShown &&
+		$page.url.pathname !== '/notepad'
+	) {
+		isLoading = true;
+		hasShownOverlayLocally = true;
+		setTimeout(() => {
+			isLoading = false;
+			overlayShown.set(true);
+			localStorage.setItem('overlayShown', 'true');
+		}, 1500);
+	}
+
+	$: if ($user) {
+		document.dispatchEvent(new Event('UserLoggedIn'));
+	}
+
+	$: if (browser) {
+		$darkMode
+			? document.body.classList.add('dark-mode')
+			: document.body.classList.remove('dark-mode');
+	}
+
+	$: if (browser && window.innerWidth <= 768 && $page) {
+		sidebarVisible.set(false);
+	}
+
+	$: if ($user && browser) {
+		initCalendarService();
+	}
 </script>
 
+<EventPopup />
+
 {#if $page.url.pathname !== '/notepad' && isLoading}
-  <LoadingScreen bind:isLoading />
+	<LoadingScreen bind:isLoading />
 {/if}
 
-
 <div class="app">
-  <Header />
-  <div class="content">
-    {#if $user}
-      <Sidebar />
-    {/if}
-    <main>
-      <slot />
-    </main>
-  </div>
-  <div id="overlay" class="overlay hidden"></div>
+	<Header />
+	<div class="content">
+		{#if $user}
+			<Sidebar />
+		{/if}
+		<main>
+			<slot />
+		</main>
+	</div>
+	<div id="overlay" class="overlay hidden"></div>
 </div>

@@ -1,536 +1,542 @@
 <script>
-  import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
-  import { supabase } from '../../../supabase';
-  import { onMount, tick } from 'svelte';
-  import '../../../app.css';
-  import LinkOptionsPopup from '$lib/components/LinkOptionsPopup.svelte';
-  import { browser } from '$app/environment';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	import { supabase } from '../../../supabase';
+	import { onMount, tick } from 'svelte';
+	import '../../../app.css';
+	import LinkOptionsPopup from '$lib/components/LinkOptionsPopup.svelte';
+	import { browser } from '$app/environment';
+	import EntityCalendar from '$lib/components/EntityCalendar.svelte';
 
-  let entity = null;
-  let items = [];
-  let newItemName = '';
-  let selectedItem = null;
-  let showNoteSidebar = false;
+	let entity = null;
+	let items = [];
+	let newItemName = '';
+	let selectedItem = null;
+	let showNoteSidebar = false;
 
-  $: folderId = $page.url.searchParams.get('folderId');
-  $: entityId = $page.params.id;
-  $: incompleteTasks = items.filter(item => !item.completed);
-  $: completedTasks = items.filter(item => item.completed);
-  $: itemId = $page.url.searchParams.get('itemId');
+	$: folderId = $page.url.searchParams.get('folderId');
+	$: entityId = $page.params.id;
+	$: incompleteTasks = items.filter((item) => !item.completed);
+	$: completedTasks = items.filter((item) => item.completed);
+	$: itemId = $page.url.searchParams.get('itemId');
 
-// Modify your onMount function to handle opening the note for the specified item
-onMount(() => {
-  loadEntityAndItems().then(() => {
-    // Check if we need to open a specific item's note
-    if (itemId) {
-      const itemToOpen = items.find(item => item.id.toString() === itemId);
-      if (itemToOpen) {
-        openNoteSidebar(itemToOpen);
-      }
-    }
-  });
-  
-  if (window.tutorial && window.tutorial.currentStep === 5) {
-    window.tutorial.currentStepSet[5].action();
-  }
-  
-  window.addEventListener('click', (e) => {
-    if (showPopup && !e.target.closest('.options-popup') && !e.target.closest('.note-link')) {
-      showPopup = false;
-    }
-  });
-});
+	// Modify your onMount function to handle opening the note for the specified item
+	onMount(() => {
+		loadEntityAndItems().then(() => {
+			// Check if we need to open a specific item's note
+			if (itemId) {
+				const itemToOpen = items.find((item) => item.id.toString() === itemId);
+				if (itemToOpen) {
+					openNoteSidebar(itemToOpen);
+				}
+			}
+		});
 
+		if (window.tutorial && window.tutorial.currentStep === 5) {
+			window.tutorial.currentStepSet[5].action();
+		}
 
-  function goBackToFolder() {
-    if (folderId) {
-      goto(`/folder/${folderId}`);
-    }
-  }
+		window.addEventListener('click', (e) => {
+			if (showPopup && !e.target.closest('.options-popup') && !e.target.closest('.note-link')) {
+				showPopup = false;
+			}
+		});
+	});
 
-  let isLoading = true;
+	function goBackToFolder() {
+		if (folderId) {
+			goto(`/folder/${folderId}`);
+		}
+	}
 
-  async function loadEntityAndItems() {
-  isLoading = true;
-  try {
-    const [responses] = await Promise.all([
-      Promise.all([
-        supabase
-          .from('entities')
-          .select('*')
-          .eq('id', entityId)
-          .single(),
-        supabase
-          .from('items')
-          .select('*')
-          .eq('entity_id', entityId)
-          .order('last_updated', { ascending: true })
-      ]),
-      new Promise(resolve => setTimeout(resolve, 500))
-    ]);
+	let isLoading = true;
 
-    const [entityData, itemsData] = responses;
+	async function loadEntityAndItems() {
+		isLoading = true;
+		try {
+			const [responses] = await Promise.all([
+				Promise.all([
+					supabase.from('entities').select('*').eq('id', entityId).single(),
+					supabase
+						.from('items')
+						.select('*')
+						.eq('entity_id', entityId)
+						.order('last_updated', { ascending: true })
+				]),
+				new Promise((resolve) => setTimeout(resolve, 500))
+			]);
 
-    if (entityData.error) {
-      console.error('Error loading entity:', entityData.error);
-      return;
-    }
+			const [entityData, itemsData] = responses;
 
-    if (itemsData.error) {
-      console.error('Error loading items:', itemsData.error);
-      return;
-    }
+			if (entityData.error) {
+				console.error('Error loading entity:', entityData.error);
+				return;
+			}
 
-    entity = entityData.data;
-    items = itemsData.data;
-  } catch (error) {
-    console.error('Error loading entity data:', error);
-  } finally {
-    isLoading = false;
-  }
-}
+			if (itemsData.error) {
+				console.error('Error loading items:', itemsData.error);
+				return;
+			}
 
-  async function createItem() {
-  if (newItemName.trim()) {
-    const { data, error } = await supabase
-      .from('items')
-      .insert({
-        entity_id: entityId,
-        name: newItemName.trim(),
-      })
-      .select();
+			entity = entityData.data;
+			items = itemsData.data;
+		} catch (error) {
+			console.error('Error loading entity data:', error);
+		} finally {
+			isLoading = false;
+		}
+	}
 
-    if (error) {
-      console.error('Error creating item:', error);
-    } else {
-      items = [data[0], ...items];
-      newItemName = '';
-      if (window.tutorial && window.tutorial.currentStep === 5) {
-        window.tutorial.nextStep();
-      }
-    }
-  }
-}
+	async function createItem() {
+		if (newItemName.trim()) {
+			const { data, error } = await supabase
+				.from('items')
+				.insert({
+					entity_id: entityId,
+					name: newItemName.trim()
+				})
+				.select();
 
-  async function renameItem(item) {
-  const newName = prompt('Enter new name for the item:', item.name);
-  if (newName && newName.trim() !== '' && newName !== item.name) {
-    const { error } = await supabase
-      .from('items')
-      .update({ name: newName.trim(), last_updated: new Date().toISOString() })
-      .eq('id', item.id);
+			if (error) {
+				console.error('Error creating item:', error);
+			} else {
+				items = [data[0], ...items];
+				newItemName = '';
+				if (window.tutorial && window.tutorial.currentStep === 5) {
+					window.tutorial.nextStep();
+				}
+			}
+		}
+	}
 
-    if (error) {
-      console.error('Error renaming item:', error);
-    } else {
-      items = items.map(i => i.id === item.id ? {...i, name: newName.trim()} : i);
-    }
-  }
-}
+	async function renameItem(item) {
+		const newName = prompt('Enter new name for the item:', item.name);
+		if (newName && newName.trim() !== '' && newName !== item.name) {
+			const { error } = await supabase
+				.from('items')
+				.update({ name: newName.trim(), last_updated: new Date().toISOString() })
+				.eq('id', item.id);
 
-  async function toggleItemCompletion(item) {
-    const { error } = await supabase
-      .from('items')
-      .update({ completed: !item.completed, last_updated: new Date().toISOString() })
-      .eq('id', item.id);
+			if (error) {
+				console.error('Error renaming item:', error);
+			} else {
+				items = items.map((i) => (i.id === item.id ? { ...i, name: newName.trim() } : i));
+			}
+		}
+	}
 
-    if (error) {
-      console.error('Error updating item:', error);
-    } else {
-      item.completed = !item.completed;
-      items = [...items];
-    }
-  }
+	async function toggleItemCompletion(item) {
+		const { error } = await supabase
+			.from('items')
+			.update({ completed: !item.completed, last_updated: new Date().toISOString() })
+			.eq('id', item.id);
 
-  function handleKeydown(event) {
-  if (event.ctrlKey && event.key === 's') {
-    event.preventDefault();
-    updateItemNote();
-  } else if (event.key === 'Escape') {
-    event.preventDefault();
-    updateItemNoteWithoutTimestamp();
-  }
-}
+		if (error) {
+			console.error('Error updating item:', error);
+		} else {
+			item.completed = !item.completed;
+			items = [...items];
+		}
+	}
 
-  function formatRelativeTime(timestamp) {
-    const now = new Date();
-    const diff = now - new Date(timestamp);
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+	function handleKeydown(event) {
+		if (event.ctrlKey && event.key === 's') {
+			event.preventDefault();
+			updateItemNote();
+		} else if (event.key === 'Escape') {
+			event.preventDefault();
+			updateItemNoteWithoutTimestamp();
+		}
+	}
 
-    if (seconds < 60) return `${seconds} seconds ago`;
-    if (minutes < 60) return `${minutes} minutes ago`;
-    if (hours < 48) return `${hours} hours ago`;
-    return `${days} days ago`;
-  }
+	function formatRelativeTime(timestamp) {
+		const now = new Date();
+		const diff = now - new Date(timestamp);
+		const seconds = Math.floor(diff / 1000);
+		const minutes = Math.floor(seconds / 60);
+		const hours = Math.floor(minutes / 60);
+		const days = Math.floor(hours / 24);
 
-  async function updateTimestamp(item) {
-    const newTimestamp = new Date().toISOString();
-    const { error } = await supabase
-      .from('items')
-      .update({ last_updated: newTimestamp })
-      .eq('id', item.id);
+		if (seconds < 60) return `${seconds} seconds ago`;
+		if (minutes < 60) return `${minutes} minutes ago`;
+		if (hours < 48) return `${hours} hours ago`;
+		return `${days} days ago`;
+	}
 
-    if (error) {
-      console.error('Error updating timestamp:', error);
-    } else {
-      items = items
-        .map(i => i.id === item.id ? {...i, last_updated: newTimestamp} : i)
-        .sort((a, b) => new Date(a.last_updated) - new Date(b.last_updated));
-    }
-  }
+	async function updateTimestamp(item) {
+		const newTimestamp = new Date().toISOString();
+		const { error } = await supabase
+			.from('items')
+			.update({ last_updated: newTimestamp })
+			.eq('id', item.id);
 
-  async function deleteItem(item) {
-    const { error } = await supabase
-      .from('items')
-      .delete()
-      .eq('id', item.id);
+		if (error) {
+			console.error('Error updating timestamp:', error);
+		} else {
+			items = items
+				.map((i) => (i.id === item.id ? { ...i, last_updated: newTimestamp } : i))
+				.sort((a, b) => new Date(a.last_updated) - new Date(b.last_updated));
+		}
+	}
 
-    if (error) {
-      console.error('Error deleting item:', error);
-    } else {
-      items = items.filter(i => i.id !== item.id);
-    }
-  }
-  function handleAddItem() {
-  if (window.tutorial && window.tutorial.currentStep === 6) {
-    window.tutorial.nextStep();
-  }
-}
+	async function deleteItem(item) {
+		const { error } = await supabase.from('items').delete().eq('id', item.id);
 
-async function toggleImportant(item) {
-  const { error } = await supabase
-    .from('items')
-    .update({ important: !item.important })
-    .eq('id', item.id);
+		if (error) {
+			console.error('Error deleting item:', error);
+		} else {
+			items = items.filter((i) => i.id !== item.id);
+		}
+	}
+	function handleAddItem() {
+		if (window.tutorial && window.tutorial.currentStep === 6) {
+			window.tutorial.nextStep();
+		}
+	}
 
-  if (error) {
-    console.error('Error updating item importance:', error);
-  } else {
-    item.important = !item.important;
-    items = [...items];
-  }
-}
+	async function toggleImportant(item) {
+		const { error } = await supabase
+			.from('items')
+			.update({ important: !item.important })
+			.eq('id', item.id);
 
-async function openNoteSidebar(item) {
-    selectedItem = item;
-    showNoteSidebar = true;
-    
-    await tick();
-    
-    const noteArea = document.getElementById('note-area');
-    if (noteArea) {
-      noteArea.focus();
-    }
-  }
+		if (error) {
+			console.error('Error updating item importance:', error);
+		} else {
+			item.important = !item.important;
+			items = [...items];
+		}
+	}
 
-  async function updateItemNote() {
-  const newTimestamp = new Date().toISOString();
-  const { error } = await supabase
-    .from('items')
-    .update({ 
-      note: selectedItem.note, 
-      last_updated: newTimestamp 
-    })
-    .eq('id', selectedItem.id);
+	async function openNoteSidebar(item) {
+		selectedItem = item;
+		showNoteSidebar = true;
 
-  if (error) {
-    console.error('Error updating item note:', error);
-  } else {
-    items = items
-      .map(i => i.id === selectedItem.id 
-        ? {...i, note: selectedItem.note, last_updated: newTimestamp} 
-        : i)
-      .sort((a, b) => new Date(a.last_updated) - new Date(b.last_updated));
-    
-    showNoteSidebar = false;
-    if (window.tutorial && window.tutorial.currentStep === 7) {
-      window.tutorial.nextStep();
-    }
-  }
-}
+		await tick();
 
-function truncateNote(note) {
-    return note ? (note.length > 120 ? note.slice(0, 120) + '...' : note) : '';
-}
+		const noteArea = document.getElementById('note-area');
+		if (noteArea) {
+			noteArea.focus();
+		}
+	}
 
-function parseNoteWithLinks(note) {
-  if (!note) return { text: '', hasLinks: false };
+	async function updateItemNote() {
+		const newTimestamp = new Date().toISOString();
+		const { error } = await supabase
+			.from('items')
+			.update({
+				note: selectedItem.note,
+				last_updated: newTimestamp
+			})
+			.eq('id', selectedItem.id);
 
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const fullLinks = Array.from(note.matchAll(urlRegex), m => m[0]);
-  
-  const truncatedNote = truncateNote(note);
-  const hasLinks = fullLinks.length > 0;
+		if (error) {
+			console.error('Error updating item note:', error);
+		} else {
+			items = items
+				.map((i) =>
+					i.id === selectedItem.id
+						? { ...i, note: selectedItem.note, last_updated: newTimestamp }
+						: i
+				)
+				.sort((a, b) => new Date(a.last_updated) - new Date(b.last_updated));
 
-  if (!hasLinks) return { text: truncatedNote, hasLinks: false };
+			showNoteSidebar = false;
+			if (window.tutorial && window.tutorial.currentStep === 7) {
+				window.tutorial.nextStep();
+			}
+		}
+	}
 
-  let parts = [];
-  let lastIndex = 0;
-  let linkIndex = 0;
-  
-  for (const match of truncatedNote.matchAll(urlRegex)) {
-    parts.push(truncatedNote.substring(lastIndex, match.index));
-    parts.push({ display: match[0], fullLink: fullLinks[linkIndex] });
-    lastIndex = match.index + match[0].length;
-    linkIndex++;
-  }
-  parts.push(truncatedNote.substring(lastIndex));
+	function truncateNote(note) {
+		return note ? (note.length > 120 ? note.slice(0, 120) + '...' : note) : '';
+	}
 
-  return {
-    parts: parts,
-    fullLinks: fullLinks,
-    hasLinks: true
-  };
-}
+	function parseNoteWithLinks(note) {
+		if (!note) return { text: '', hasLinks: false };
 
+		const urlRegex = /(https?:\/\/[^\s]+)/g;
+		const fullLinks = Array.from(note.matchAll(urlRegex), (m) => m[0]);
 
-let showPopup = false;
-let popupItem = null;
-let popupPosition = { top: 0, left: 0 };
-let popupLink = '';
+		const truncatedNote = truncateNote(note);
+		const hasLinks = fullLinks.length > 0;
 
-function showOptionsPopup(item, rect) {
-  popupItem = item;
-  const parsed = parseNoteWithLinks(item.note);
-  popupLink = parsed.fullLinks[0];
-  popupPosition = {
-    top: rect.bottom + window.scrollY + 5,
-    left: rect.left + window.scrollX
-  };
-  showPopup = true;
-}
+		if (!hasLinks) return { text: truncatedNote, hasLinks: false };
 
-async function updateItemNoteWithoutTimestamp() {
-  const { error } = await supabase
-    .from('items')
-    .update({ 
-      note: selectedItem.note
-    })
-    .eq('id', selectedItem.id);
+		let parts = [];
+		let lastIndex = 0;
+		let linkIndex = 0;
 
-  if (error) {
-    console.error('Error updating item note:', error);
-  } else {
-    items = items.map(i => i.id === selectedItem.id 
-      ? {...i, note: selectedItem.note} 
-      : i);
-    
-    showNoteSidebar = false;
-  }
-}
+		for (const match of truncatedNote.matchAll(urlRegex)) {
+			parts.push(truncatedNote.substring(lastIndex, match.index));
+			parts.push({ display: match[0], fullLink: fullLinks[linkIndex] });
+			lastIndex = match.index + match[0].length;
+			linkIndex++;
+		}
+		parts.push(truncatedNote.substring(lastIndex));
 
-function getTimestampColor(timestamp) {
-  const now = new Date();
-  const updated = new Date(timestamp);
-  const diffInHours = (now - updated) / (1000 * 60 * 60);
-  
-  let normalizedDiff;
-  
-  if (diffInHours <= 24) {
-    normalizedDiff = (diffInHours / 24) * 0.5;
-  } else {
-    const diffInDays = Math.min(diffInHours / 24, 14);
-    normalizedDiff = 0.5 + ((diffInDays - 1) / 13) * 0.5;
-  }
-  
-  const hue = 120 * (1 - normalizedDiff);
-  
-  const saturation = 100;
-  const lightness = 30 + (normalizedDiff * 20);
-  
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-}
+		return {
+			parts: parts,
+			fullLinks: fullLinks,
+			hasLinks: true
+		};
+	}
 
+	let showPopup = false;
+	let popupItem = null;
+	let popupPosition = { top: 0, left: 0 };
+	let popupLink = '';
 
+	function showOptionsPopup(item, rect) {
+		popupItem = item;
+		const parsed = parseNoteWithLinks(item.note);
+		popupLink = parsed.fullLinks[0];
+		popupPosition = {
+			top: rect.bottom + window.scrollY + 5,
+			left: rect.left + window.scrollX
+		};
+		showPopup = true;
+	}
 
-function handleOptionClick(action) {
-  if (action === 'open') {
-    window.open(popupLink, '_blank');
-  } else if (action === 'edit') {
-    openNoteSidebar(popupItem);
-  }
-  showPopup = false;
-}
+	async function updateItemNoteWithoutTimestamp() {
+		const { error } = await supabase
+			.from('items')
+			.update({
+				note: selectedItem.note
+			})
+			.eq('id', selectedItem.id);
+
+		if (error) {
+			console.error('Error updating item note:', error);
+		} else {
+			items = items.map((i) => (i.id === selectedItem.id ? { ...i, note: selectedItem.note } : i));
+
+			showNoteSidebar = false;
+		}
+	}
+
+	function getTimestampColor(timestamp) {
+		const now = new Date();
+		const updated = new Date(timestamp);
+		const diffInHours = (now - updated) / (1000 * 60 * 60);
+
+		let normalizedDiff;
+
+		if (diffInHours <= 24) {
+			normalizedDiff = (diffInHours / 24) * 0.5;
+		} else {
+			const diffInDays = Math.min(diffInHours / 24, 14);
+			normalizedDiff = 0.5 + ((diffInDays - 1) / 13) * 0.5;
+		}
+
+		const hue = 120 * (1 - normalizedDiff);
+
+		const saturation = 100;
+		const lightness = 30 + normalizedDiff * 20;
+
+		return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+	}
+
+	function handleOptionClick(action) {
+		if (action === 'open') {
+			window.open(popupLink, '_blank');
+		} else if (action === 'edit') {
+			openNoteSidebar(popupItem);
+		}
+		showPopup = false;
+	}
 </script>
+
+<div class="entity-calendar-section">
+	<h2>Calendar Integration</h2>
+	<EntityCalendar {entityId} />
+</div>
+
 {#if isLoading && (!browser || !window.tutorial || !window.tutorial.currentStep)}
-  <div class="folder-view skeleton">
-    <div class="skeleton-header"></div>
-    <div class="skeleton-sections">
-      <div class="skeleton-section">
-        <div class="skeleton-section-header"></div>
-        <div class="skeleton-entities">
-          <div class="skeleton-entity"></div>
-          <div class="skeleton-entity"></div>
-          <div class="skeleton-entity"></div>
-        </div>
-      </div>
-      <div class="skeleton-section">
-        <div class="skeleton-section-header"></div>
-        <div class="skeleton-entities">
-          <div class="skeleton-entity"></div>
-          <div class="skeleton-entity"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+	<div class="folder-view skeleton">
+		<div class="skeleton-header"></div>
+		<div class="skeleton-sections">
+			<div class="skeleton-section">
+				<div class="skeleton-section-header"></div>
+				<div class="skeleton-entities">
+					<div class="skeleton-entity"></div>
+					<div class="skeleton-entity"></div>
+					<div class="skeleton-entity"></div>
+				</div>
+			</div>
+			<div class="skeleton-section">
+				<div class="skeleton-section-header"></div>
+				<div class="skeleton-entities">
+					<div class="skeleton-entity"></div>
+					<div class="skeleton-entity"></div>
+				</div>
+			</div>
+		</div>
+	</div>
 {:else}
-<div class="entity-page">
-  <div class="entity-header">
-    <button class="back-button" on:click={goBackToFolder}>
-      <span class="desktop-arrow">🠈</span>
-      <span class="mobile-arrow">◀</span>
-    </button>    
-    <h1>{entity ? entity.name : 'Loading...'}</h1>
-  </div>
+	<div class="entity-page">
+		<div class="entity-header">
+			<button class="back-button" on:click={goBackToFolder}>
+				<span class="desktop-arrow">🠈</span>
+				<span class="mobile-arrow">◀</span>
+			</button>
+			<h1>{entity ? entity.name : 'Loading...'}</h1>
+		</div>
 
-  <form on:submit|preventDefault={createItem}>
-    <input type="text" bind:value={newItemName} placeholder="New item name" id="new-item-input" />
-    <button type="submit" class="button" id="add-item-button" on:click={handleAddItem}>Add Item</button>
-  </form>
+		<form on:submit|preventDefault={createItem}>
+			<input type="text" bind:value={newItemName} placeholder="New item name" id="new-item-input" />
+			<button type="submit" class="button" id="add-item-button" on:click={handleAddItem}
+				>Add Item</button
+			>
+		</form>
 
-  <h2>Incomplete Tasks</h2>
-  <ul class="item-list">
-    {#each incompleteTasks as item (item.id)}
-      <li class="item">
-        <div class="item-content">
-          <button on:click={() => toggleItemCompletion(item)} class="complete-btn" 
-                  style="color: {getTimestampColor(item.last_updated)}">
-            <i class="fas fa-check"></i>
-          </button>
-          
-          <span class="item-name">{item.name}</span>
-          <span class="last-updated" style="color: {getTimestampColor(item.last_updated)}">
-            Updated {formatRelativeTime(item.last_updated)}
-          </span>
-          <button on:click={() => updateTimestamp(item)} class="update-timestamp-btn">
-            <i class="fas fa-sync-alt"></i>
-          </button>          
-          <button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
-          <button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
-          <button class="btn-icon" on:click={() => toggleImportant(item)}>
-            {#if item.important}
-              <span style="color: gold;">★</span>
-            {:else}
-              <span style="color: gray;">☆</span>
-            {/if}
-          </button>
-        </div>
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div class="item-note" on:click={(e) => {
-          const clickedLink = e.target.closest('a');
-          if (clickedLink) {
-            e.preventDefault();
-            const rect = clickedLink.getBoundingClientRect();
-            showOptionsPopup(item, rect);
-          } else {
-            openNoteSidebar(item);
-            if (window.tutorial && window.tutorial.currentStep === 6) {
-              window.tutorial.nextStep();
-            }
-          }
-        }}>        
-{#if item.note}
-  {@const parsed = parseNoteWithLinks(item.note)}
-  {#if parsed.hasLinks}
-  {#each parsed.parts as part}
-  {#if typeof part === 'object'}
-    <a href={part.fullLink} class="note-link">{part.display}</a>
-  {:else}
-    <span>{part}</span>
-  {/if}
-{/each}
-  {:else}
-    {truncateNote(item.note)}
-  {/if}
-{:else}
-  Click to add a note
-{/if}
-        </div>
-      </li>
-    {/each}
-  </ul>
-  
-  <h2>Completed Tasks</h2>
-  <ul class="item-list">
-    {#each completedTasks as item (item.id)}
-      <li class="item completed">
-        <div class="item-content">
-          <button on:click={() => toggleItemCompletion(item)} class="uncomplete-btn">
-            <i class="fas fa-check"></i>
-          </button>
-          
-          <span class="item-name">{item.name}</span>
-          <span class="last-updated">Updated: {formatRelativeTime(item.last_updated)}</span>
-          <button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
-          <button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
-        </div>
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div class="item-note" on:click={(e) => {
-          const clickedLink = e.target.closest('a');
-          if (clickedLink) {
-            e.preventDefault();
-            const rect = clickedLink.getBoundingClientRect();
-            showOptionsPopup(item, rect);
-          } else {
-            openNoteSidebar(item);
-          }
-        }}>
-{#if item.note}
-{@const parsed = parseNoteWithLinks(item.note)}
-{#if parsed.hasLinks}
-  {#each parsed.parts as part}
-    {#if typeof part === 'object'}
-      <a href={part.fullLink} class="note-link">{part.display}</a>
-    {:else}
-      <span>{part}</span>
-    {/if}
-  {/each}
-{:else}
-  {truncateNote(item.note)}
-{/if}
-{:else}
-Click to add a note
-{/if}
-        </div>
-      </li>
-    {/each}
-  </ul>  
+		<h2>Incomplete Tasks</h2>
+		<ul class="item-list">
+			{#each incompleteTasks as item (item.id)}
+				<li class="item">
+					<div class="item-content">
+						<button
+							on:click={() => toggleItemCompletion(item)}
+							class="complete-btn"
+							style="color: {getTimestampColor(item.last_updated)}"
+						>
+							<i class="fas fa-check"></i>
+						</button>
 
-<div class="note-sidebar" class:open={showNoteSidebar}>
-  {#if selectedItem}
-    <div class="note-sidebar-header">
-      <h2>{selectedItem.name}</h2>
-      <button class="sidebar-star-btn" on:click={() => toggleImportant(selectedItem)}>
-        {#if selectedItem.important}
-          <span style="color: gold; font-size: 1.5rem;">★</span>
-        {:else}
-          <span style="color: gray; font-size: 1.5rem;">☆</span>
-        {/if}
-      </button>
-    </div>
-    <h3>Note</h3>
-    <textarea id="note-area" bind:value={selectedItem.note} on:keydown={handleKeydown}></textarea>
-    <div class="note-sidebar-buttons">
-      <button id="save-note" class="button" on:click={updateItemNote}>Save & Update</button>
-      <button class="second-button" on:click={updateItemNoteWithoutTimestamp}>Save & Close</button>
-    </div>    
-  {:else}
-    <div></div>
-  {/if}
-</div>
-</div>
+						<span class="item-name">{item.name}</span>
+						<span class="last-updated" style="color: {getTimestampColor(item.last_updated)}">
+							Updated {formatRelativeTime(item.last_updated)}
+						</span>
+						<button on:click={() => updateTimestamp(item)} class="update-timestamp-btn">
+							<i class="fas fa-sync-alt"></i>
+						</button>
+						<button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
+						<button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
+						<button class="btn-icon" on:click={() => toggleImportant(item)}>
+							{#if item.important}
+								<span style="color: gold;">★</span>
+							{:else}
+								<span style="color: gray;">☆</span>
+							{/if}
+						</button>
+					</div>
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<div
+						class="item-note"
+						on:click={(e) => {
+							const clickedLink = e.target.closest('a');
+							if (clickedLink) {
+								e.preventDefault();
+								const rect = clickedLink.getBoundingClientRect();
+								showOptionsPopup(item, rect);
+							} else {
+								openNoteSidebar(item);
+								if (window.tutorial && window.tutorial.currentStep === 6) {
+									window.tutorial.nextStep();
+								}
+							}
+						}}
+					>
+						{#if item.note}
+							{@const parsed = parseNoteWithLinks(item.note)}
+							{#if parsed.hasLinks}
+								{#each parsed.parts as part}
+									{#if typeof part === 'object'}
+										<a href={part.fullLink} class="note-link">{part.display}</a>
+									{:else}
+										<span>{part}</span>
+									{/if}
+								{/each}
+							{:else}
+								{truncateNote(item.note)}
+							{/if}
+						{:else}
+							Click to add a note
+						{/if}
+					</div>
+				</li>
+			{/each}
+		</ul>
 
-{#if showPopup}
-  <LinkOptionsPopup 
-    position={popupPosition}
-    link={popupLink}
-    onOptionClick={handleOptionClick}
-  />
-{/if}
+		<h2>Completed Tasks</h2>
+		<ul class="item-list">
+			{#each completedTasks as item (item.id)}
+				<li class="item completed">
+					<div class="item-content">
+						<button on:click={() => toggleItemCompletion(item)} class="uncomplete-btn">
+							<i class="fas fa-check"></i>
+						</button>
+
+						<span class="item-name">{item.name}</span>
+						<span class="last-updated">Updated: {formatRelativeTime(item.last_updated)}</span>
+						<button class="btn-icon" on:click={() => renameItem(item)}>✏️</button>
+						<button class="btn-icon" on:click={() => deleteItem(item)}>🗑️</button>
+					</div>
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<div
+						class="item-note"
+						on:click={(e) => {
+							const clickedLink = e.target.closest('a');
+							if (clickedLink) {
+								e.preventDefault();
+								const rect = clickedLink.getBoundingClientRect();
+								showOptionsPopup(item, rect);
+							} else {
+								openNoteSidebar(item);
+							}
+						}}
+					>
+						{#if item.note}
+							{@const parsed = parseNoteWithLinks(item.note)}
+							{#if parsed.hasLinks}
+								{#each parsed.parts as part}
+									{#if typeof part === 'object'}
+										<a href={part.fullLink} class="note-link">{part.display}</a>
+									{:else}
+										<span>{part}</span>
+									{/if}
+								{/each}
+							{:else}
+								{truncateNote(item.note)}
+							{/if}
+						{:else}
+							Click to add a note
+						{/if}
+					</div>
+				</li>
+			{/each}
+		</ul>
+
+		<div class="note-sidebar" class:open={showNoteSidebar}>
+			{#if selectedItem}
+				<div class="note-sidebar-header">
+					<h2>{selectedItem.name}</h2>
+					<button class="sidebar-star-btn" on:click={() => toggleImportant(selectedItem)}>
+						{#if selectedItem.important}
+							<span style="color: gold; font-size: 1.5rem;">★</span>
+						{:else}
+							<span style="color: gray; font-size: 1.5rem;">☆</span>
+						{/if}
+					</button>
+				</div>
+				<h3>Note</h3>
+				<textarea id="note-area" bind:value={selectedItem.note} on:keydown={handleKeydown}
+				></textarea>
+				<div class="note-sidebar-buttons">
+					<button id="save-note" class="button" on:click={updateItemNote}>Save & Update</button>
+					<button class="second-button" on:click={updateItemNoteWithoutTimestamp}
+						>Save & Close</button
+					>
+				</div>
+			{:else}
+				<div></div>
+			{/if}
+		</div>
+	</div>
+
+	{#if showPopup}
+		<LinkOptionsPopup position={popupPosition} link={popupLink} onOptionClick={handleOptionClick} />
+	{/if}
 {/if}
