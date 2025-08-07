@@ -35,17 +35,6 @@
 				loading = false;
 				return;
 			}
-			try {
-				const redirectResult = await msalInstance.handleRedirectPromise();
-				if (redirectResult) {
-					console.log('Successfully handled authentication redirect');
-				}
-			} catch (redirectError) {
-				console.error('Error handling authentication:', redirectError);
-				error = 'Error connecting to Microsoft account';
-				loading = false;
-				return;
-			}
 			isMsLoggedIn = isMicrosoftLoggedIn(); // --- UPDATE OUR STATE VARIABLE ---
 			const token = await getAccessToken();
 			if (!token && !isMsLoggedIn) {
@@ -119,18 +108,16 @@
 	}
 	async function linkEventToEntity(userId, entityId, eventId, eventDetails) {
 		try {
-			const { data, error } = await supabase
-				.from('calendar_events')
-				.insert({
-					user_id: userId,
-					entity_id: entityId,
-					event_id: eventId,
-					event_title: eventDetails.subject,
-					event_start: eventDetails.start.dateTime,
-					event_end: eventDetails.end.dateTime,
-					event_location: eventDetails.location?.displayName || '',
-					event_details: eventDetails
-				});
+			const { data, error } = await supabase.from('calendar_events').insert({
+				user_id: userId,
+				entity_id: entityId,
+				event_id: eventId,
+				event_title: eventDetails.subject,
+				event_start: eventDetails.start.dateTime,
+				event_end: eventDetails.end.dateTime,
+				event_location: eventDetails.location?.displayName || '',
+				event_details: eventDetails
+			});
 			if (error) throw error;
 			return data;
 		} catch (error) {
@@ -183,6 +170,8 @@
 			loading = true;
 			error = null;
 			await loginWithMicrosoft();
+			// Reload to trigger calendar fetch with new session
+			window.location.reload();
 		} catch (err) {
 			console.error('Error connecting to Microsoft:', err);
 			error = err.message;
