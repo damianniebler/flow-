@@ -7,6 +7,7 @@ import { goto } from '$app/navigation';
 import { MICROSOFT_CLIENT_ID } from '$lib/env';
 
 import { PublicClientApplication, BrowserAuthError } from '@azure/msal-browser';
+import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
 
 export const user = writable(null);
 
@@ -169,6 +170,31 @@ let msalInstance = null;
 let isInitializing = false;
 
 let initializePromise = null;
+
+// Handle deep links from the system browser (e.g. after Microsoft login)
+if (typeof window !== 'undefined') {
+	onOpenUrl(async (urls) => {
+		const instance = getMsalInstance();
+		if (!instance) return;
+
+		try {
+			await ensureInitialized();
+			for (const url of urls) {
+				try {
+					const result = await instance.handleRedirectPromise(url);
+					if (result?.account) {
+						instance.setActiveAccount(result.account);
+						document.dispatchEvent(new Event('UserLoggedIn'));
+					}
+				} catch (error) {
+					console.error('MSAL redirect handling failed:', error);
+				}
+			}
+		} catch (error) {
+			console.error('Failed to initialize MSAL for deep link handling:', error);
+		}
+	});
+}
 
 // Initialize MSAL in browser environment only
 

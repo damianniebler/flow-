@@ -43,7 +43,12 @@ fn flash_taskbar(app: tauri::AppHandle, title: String) {
 
 fn main() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|_, _, _| {}))
+        .plugin(tauri_plugin_single_instance::init(|app, _, _| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_deep_link::init())
         .invoke_handler(tauri::generate_handler![flash_taskbar])
         .run(tauri::generate_context!())
