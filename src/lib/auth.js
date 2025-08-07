@@ -4,6 +4,7 @@ import { goto } from '$app/navigation';
 import { MICROSOFT_CLIENT_ID } from '$lib/env';
 import { PublicClientApplication, BrowserAuthError } from '@azure/msal-browser';
 import { listen } from '@tauri-apps/api/event';
+import { open } from '@tauri-apps/api/shell';
 
 export const user = writable(null);
 
@@ -18,16 +19,14 @@ export async function signUp(email, password, firstName) {
 	if (authError) throw authError;
 
 	if (authData.user) {
-		const { error: insertError } = await supabase
-			.from('users')
-			.insert([
-				{
-					id: authData.user.id,
-					email: authData.user.email,
-					first_name: firstName,
-					password: null
-				}
-			]);
+		const { error: insertError } = await supabase.from('users').insert([
+			{
+				id: authData.user.id,
+				email: authData.user.email,
+				first_name: firstName,
+				password: null
+			}
+		]);
 
 		if (insertError) throw insertError;
 
@@ -217,7 +216,8 @@ export async function loginWithMicrosoft() {
 			}
 		});
 
-		await instance.loginRedirect(loginRequest);
+		const authUrl = await instance.getAuthCodeUrl(loginRequest);
+		await open(authUrl);
 	} catch (error) {
 		console.error('Login failed:', error);
 		throw error;
