@@ -7,6 +7,7 @@ import { goto } from '$app/navigation';
 import { MICROSOFT_CLIENT_ID } from '$lib/env';
 
 import { PublicClientApplication, BrowserAuthError } from '@azure/msal-browser';
+import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
 
 export const user = writable(null);
 
@@ -114,7 +115,12 @@ const msalConfig = {
 
 		authority: 'https://login.microsoftonline.com/common',
 
-		redirectUri: typeof window !== 'undefined' ? `${window.location.origin}` : '', // Ensure exact match
+		redirectUri:
+			typeof window !== 'undefined'
+				? window.__TAURI__
+					? 'flowscend://auth'
+					: `${window.location.origin}`
+				: '', // Ensure exact match
 
 		navigateToLoginRequestUrl: false // Change to false to simplify redirect handling
 	},
@@ -169,6 +175,23 @@ let msalInstance = null;
 let isInitializing = false;
 
 let initializePromise = null;
+
+let deepLinkRegistered = false;
+
+async function registerDeepLinkHandler(instance) {
+	if (deepLinkRegistered) return;
+	if (typeof window !== 'undefined' && window.__TAURI__) {
+		deepLinkRegistered = true;
+		await onOpenUrl(async (urls) => {
+			const url = Array.isArray(urls) ? urls[0] : urls;
+			try {
+				await instance.handleRedirectPromise(url);
+			} catch (e) {
+				console.error('Failed to handle deep link redirect:', e);
+			}
+		});
+	}
+}
 
 // Initialize MSAL in browser environment only
 
@@ -257,6 +280,7 @@ export async function ensureInitialized() {
 		await initializePromise;
 	}
 
+	await registerDeepLinkHandler(instance);
 	return instance;
 }
 
