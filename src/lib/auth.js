@@ -18,16 +18,14 @@ export async function signUp(email, password, firstName) {
 	if (authError) throw authError;
 
 	if (authData.user) {
-		const { error: insertError } = await supabase
-			.from('users')
-			.insert([
-				{
-					id: authData.user.id,
-					email: authData.user.email,
-					first_name: firstName,
-					password: null
-				}
-			]);
+		const { error: insertError } = await supabase.from('users').insert([
+			{
+				id: authData.user.id,
+				email: authData.user.email,
+				first_name: firstName,
+				password: null
+			}
+		]);
 
 		if (insertError) throw insertError;
 

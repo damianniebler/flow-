@@ -12,7 +12,7 @@
 
 	// --- NEW: Imports for the event listener and popup ---
 	import { listen } from '@tauri-apps/api/event';
-  import { popupStore } from '$lib/stores/popupStore.js';
+	import { popupStore } from '$lib/stores/popupStore.js';
 	import EventPopup from '$lib/components/EventPopup.svelte';
 
 	let isLoading = false;

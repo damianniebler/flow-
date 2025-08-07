@@ -119,18 +119,16 @@
 	}
 	async function linkEventToEntity(userId, entityId, eventId, eventDetails) {
 		try {
-			const { data, error } = await supabase
-				.from('calendar_events')
-				.insert({
-					user_id: userId,
-					entity_id: entityId,
-					event_id: eventId,
-					event_title: eventDetails.subject,
-					event_start: eventDetails.start.dateTime,
-					event_end: eventDetails.end.dateTime,
-					event_location: eventDetails.location?.displayName || '',
-					event_details: eventDetails
-				});
+			const { data, error } = await supabase.from('calendar_events').insert({
+				user_id: userId,
+				entity_id: entityId,
+				event_id: eventId,
+				event_title: eventDetails.subject,
+				event_start: eventDetails.start.dateTime,
+				event_end: eventDetails.end.dateTime,
+				event_location: eventDetails.location?.displayName || '',
+				event_details: eventDetails
+			});
 			if (error) throw error;
 			return data;
 		} catch (error) {
