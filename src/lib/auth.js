@@ -7,7 +7,6 @@ import { goto } from '$app/navigation';
 import { MICROSOFT_CLIENT_ID } from '$lib/env';
 
 import { PublicClientApplication, BrowserAuthError } from '@azure/msal-browser';
-import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
 
 export const user = writable(null);
 
@@ -115,12 +114,7 @@ const msalConfig = {
 
 		authority: 'https://login.microsoftonline.com/common',
 
-		redirectUri:
-			typeof window !== 'undefined'
-				? window.__TAURI__
-					? 'flowscend://auth'
-					: `${window.location.origin}`
-				: '', // Ensure exact match
+		redirectUri: typeof window !== 'undefined' ? `${window.location.origin}` : '',
 
 		navigateToLoginRequestUrl: false // Change to false to simplify redirect handling
 	},
@@ -175,23 +169,6 @@ let msalInstance = null;
 let isInitializing = false;
 
 let initializePromise = null;
-
-let deepLinkRegistered = false;
-
-async function registerDeepLinkHandler(instance) {
-	if (deepLinkRegistered) return;
-	if (typeof window !== 'undefined' && window.__TAURI__) {
-		deepLinkRegistered = true;
-		await onOpenUrl(async (urls) => {
-			const url = Array.isArray(urls) ? urls[0] : urls;
-			try {
-				await instance.handleRedirectPromise(url);
-			} catch (e) {
-				console.error('Failed to handle deep link redirect:', e);
-			}
-		});
-	}
-}
 
 // Initialize MSAL in browser environment only
 
@@ -280,7 +257,6 @@ export async function ensureInitialized() {
 		await initializePromise;
 	}
 
-	await registerDeepLinkHandler(instance);
 	return instance;
 }
 
@@ -304,9 +280,13 @@ export async function loginWithMicrosoft() {
 			prompt: 'select_account'
 		};
 
-		// Redirect to Microsoft login
+		// Use popup flow to avoid full window redirects
 
-		await instance.loginRedirect(loginRequest);
+		const result = await instance.loginPopup(loginRequest);
+
+		if (result?.account) {
+			instance.setActiveAccount(result.account);
+		}
 	} catch (error) {
 		console.error('Login failed:', error);
 
@@ -331,16 +311,6 @@ export async function getAccessToken() {
 		// Ensure MSAL is initialized
 
 		await ensureInitialized();
-
-		// Try to handle any pending redirects first
-
-		const redirectResult = await instance.handleRedirectPromise();
-
-		if (redirectResult) {
-			console.log('handleRedirectPromise result:', redirectResult);
-
-			return redirectResult.accessToken; // Return the token if redirect was successful
-		}
 
 		const accounts = instance.getAllAccounts();
 
@@ -367,18 +337,10 @@ export async function getAccessToken() {
 		} catch (error) {
 			console.error('Token acquisition failed silently:', error);
 
-			// If silent acquisition fails AND user is not logged in, redirect
-
 			if (error instanceof BrowserAuthError && error.errorCode === 'interaction_required') {
-				console.log('Interaction required, redirecting to login.');
+				const interactiveResult = await instance.acquireTokenPopup(silentRequest);
 
-				await instance.loginRedirect({
-					...silentRequest,
-
-					redirectStartPage: window.location.href
-				});
-
-				return null; // Important: Return null after redirecting
+				return interactiveResult.accessToken;
 			}
 
 			return null; // Return null for other errors
