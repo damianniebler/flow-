@@ -12,8 +12,8 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             if let Some(url) = argv.get(1) {
                 if url.starts_with("flowscend://") {
+                    app.emit_all("auth-callback", AuthCallbackPayload { url: url.clone() }).unwrap();
                     if let Some(window) = app.get_webview_window("main") {
-                        window.emit("auth-callback", AuthCallbackPayload { url: url.clone() }).unwrap();
                         window.set_focus().unwrap();
                     }
                 }
