@@ -3,7 +3,8 @@
 	import Header from './Header.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import LoadingScreen from '$lib/components/LoadingScreen.svelte';
-	import { getCurrentUser, user, ensureInitialized } from '$lib/auth';
+	import { getCurrentUser, user } from '$lib/auth';
+	import { ensureInitialized } from '$lib/microsoftAuth';
 	import { sidebarVisible, darkMode, overlayShown } from '$lib/stores/sidebarStore';
 	import '../app.css';
 	import { browser } from '$app/environment';
@@ -29,7 +30,9 @@
 					msalInstance.config.auth.postLogoutRedirectUri = window.location.origin;
 					msalInstance.config.auth.navigateToLoginRequestUrl = false;
 				}
-				await msalInstance.handleRedirectPromise();
+				if (msalInstance?.handleRedirectPromise) {
+					await msalInstance.handleRedirectPromise();
+				}
 			} catch (err) {
 				console.error('Error handling Microsoft auth redirect:', err);
 			} finally {
