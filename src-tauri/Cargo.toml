@@ -21,9 +21,9 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.7.0", features = [] }
 tauri-plugin-log = "2"
-tauri-plugin-deep-link = "2.0.0"
+tauri-plugin-oauth = "2.0.0"
 windows = { version = "0.60", default-features = false, features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
 url = "2" # <-- Added so we can use Url::parse()
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
-tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+tauri-plugin-single-instance = { version = "2" }

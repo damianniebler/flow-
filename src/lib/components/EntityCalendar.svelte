@@ -8,7 +8,7 @@
 		ensureInitialized,
 		logoutFromMicrosoft,
 		getMsalInstance
-	} from '$lib/auth';
+	} from '$lib/microsoftAuth';
 	import { InteractionRequiredAuthError } from '@azure/msal-browser';
 
 	export let entityId;
@@ -20,7 +20,7 @@
 	let currentUser = null;
 	let isMsLoggedIn = false; // --- ADD A STATE VARIABLE ---
 
-		onMount(async () => {
+	onMount(async () => {
 		// ... your existing onMount code is fine ...
 		try {
 			console.log('Starting onMount');
@@ -31,12 +31,7 @@
 				loading = false;
 				return;
 			}
-			const msalInstance = await ensureInitialized();
-			if (!msalInstance) {
-				error = 'Failed to initialize Microsoft authentication';
-				loading = false;
-				return;
-			}
+			await ensureInitialized();
 			isMsLoggedIn = isMicrosoftLoggedIn(); // --- UPDATE OUR STATE VARIABLE ---
 			let token = await getAccessToken();
 			if (!token) {
@@ -57,7 +52,9 @@
 					}
 				} catch (e) {
 					if (e instanceof InteractionRequiredAuthError || e.errorCode === 'interaction_required') {
-						await (getMsalInstance()?.acquireTokenRedirect({ scopes: ['User.Read', 'Calendars.Read'] }));
+						await getMsalInstance()?.acquireTokenRedirect({
+							scopes: ['User.Read', 'Calendars.Read']
+						});
 						return;
 					}
 					console.error('Unexpected token error:', e);
@@ -100,7 +97,9 @@
 					}
 				} catch (e) {
 					if (e instanceof InteractionRequiredAuthError || e.errorCode === 'interaction_required') {
-						await (getMsalInstance()?.acquireTokenRedirect({ scopes: ['User.Read', 'Calendars.Read'] }));
+						await getMsalInstance()?.acquireTokenRedirect({
+							scopes: ['User.Read', 'Calendars.Read']
+						});
 						return;
 					}
 					throw e;
@@ -144,18 +143,16 @@
 	}
 	async function linkEventToEntity(userId, entityId, eventId, eventDetails) {
 		try {
-			const { data, error } = await supabase
-				.from('calendar_events')
-				.insert({
-					user_id: userId,
-					entity_id: entityId,
-					event_id: eventId,
-					event_title: eventDetails.subject,
-					event_start: eventDetails.start.dateTime,
-					event_end: eventDetails.end.dateTime,
-					event_location: eventDetails.location?.displayName || '',
-					event_details: eventDetails
-				});
+			const { data, error } = await supabase.from('calendar_events').insert({
+				user_id: userId,
+				entity_id: entityId,
+				event_id: eventId,
+				event_title: eventDetails.subject,
+				event_start: eventDetails.start.dateTime,
+				event_end: eventDetails.end.dateTime,
+				event_location: eventDetails.location?.displayName || '',
+				event_details: eventDetails
+			});
 			if (error) throw error;
 			return data;
 		} catch (error) {
