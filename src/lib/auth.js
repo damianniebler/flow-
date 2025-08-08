@@ -4,6 +4,7 @@ import { goto } from '$app/navigation';
 import { MICROSOFT_CLIENT_ID } from '$lib/env';
 import { PublicClientApplication, BrowserAuthError } from '@azure/msal-browser';
 import { listen } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 
 export const user = writable(null);
 
@@ -203,17 +204,22 @@ export async function loginWithMicrosoft() {
 			prompt: 'select_account'
 		};
 
-		// Listen for the auth-callback event from Rust
 		const unlisten = await listen('auth-callback', async (event) => {
 			try {
 				const url = event.payload.url;
 				console.log('Received auth-callback event with URL:', url);
-				await instance.handleRedirectPromise(url);
-				window.location.reload(); // Reload to reflect login state
+				const responseHash = buildResponseHash(url);
+				if (responseHash) {
+					await instance.handleRedirectPromise(responseHash);
+					try { await invoke('take_pending_deep_link'); } catch (_) {}
+					window.location.reload();
+				} else {
+					console.warn('Auth callback URL did not include hash or query params.');
+				}
 			} catch (error) {
 				console.error('Error handling redirect promise:', error);
 			} finally {
-				unlisten(); // Clean up listener
+				unlisten();
 			}
 		});
 
@@ -224,6 +230,48 @@ export async function loginWithMicrosoft() {
 	}
 }
 
+function isTauri() {
+  try {
+    return typeof window !== 'undefined' && !!window.__TAURI__;
+  } catch (_) {
+    return false;
+  }
+}
+
+function buildResponseHash(urlString) {
+  try {
+    const u = new URL(urlString);
+    if (u.hash && u.hash.length > 1) {
+      return u.hash;
+    }
+    if (u.search && u.search.length > 1) {
+      return '#' + u.search.slice(1);
+    }
+  } catch (e) {
+    console.error('Failed to parse auth callback URL:', e);
+  }
+  return null;
+}
+
+export async function handlePendingMicrosoftRedirect() {
+  if (!isTauri()) return;
+  const instance = getMsalInstance();
+  if (!instance) return;
+  try {
+    await ensureInitialized();
+    const pendingUrl = await invoke('take_pending_deep_link');
+    if (pendingUrl && typeof pendingUrl === 'string' && pendingUrl.length > 0) {
+      console.log('Processing pending deep link URL from Tauri:', pendingUrl);
+      const responseHash = buildResponseHash(pendingUrl);
+      if (responseHash) {
+        await instance.handleRedirectPromise(responseHash);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to process pending Microsoft redirect:', e);
+  }
+}
+
 export async function getAccessToken() {
 	const instance = getMsalInstance();
 	if (!instance) return null;
@@ -231,6 +279,9 @@ export async function getAccessToken() {
 	try {
 		logStorageState();
 		await ensureInitialized();
+
+		// If running in Tauri, process any pending deep-link redirect first
+		await handlePendingMicrosoftRedirect();
 
 		const accounts = instance.getAllAccounts();
 		console.log('Current accounts:', accounts);

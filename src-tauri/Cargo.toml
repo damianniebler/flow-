@@ -8,8 +8,6 @@ repository = ""
 edition = "2021"
 rust-version = "1.77.2"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
@@ -25,3 +23,7 @@ tauri = { version = "2.7.0", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-deep-link = "2.0.0"
 windows = { version = "0.60", default-features = false, features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
+url = "2" # <-- Added so we can use Url::parse()
+
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }

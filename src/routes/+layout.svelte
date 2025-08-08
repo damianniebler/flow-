@@ -3,23 +3,39 @@
 	import Header from './Header.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import LoadingScreen from '$lib/components/LoadingScreen.svelte';
-	import { getCurrentUser, user } from '$lib/auth';
+	import { getCurrentUser, user, ensureInitialized } from '$lib/auth';
 	import { sidebarVisible, darkMode, overlayShown } from '$lib/stores/sidebarStore';
 	import '../app.css';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { initCalendarService } from '$lib/services/calendarService';
 
-	// --- NEW: Imports for the event listener and popup ---
+	// Imports for event listeners & popup
 	import { listen } from '@tauri-apps/api/event';
-  import { popupStore } from '$lib/stores/popupStore.js';
+	import { popupStore } from '$lib/stores/popupStore.js';
 	import EventPopup from '$lib/components/EventPopup.svelte';
 
+	let authReady = false;
 	let isLoading = false;
 	let hasShownOverlayLocally = false;
 
-	// The onMount function needs to be async to set up the listener
 	onMount(async () => {
+		// Ensure MSAL redirect is processed before rendering UI
+		if (browser) {
+			try {
+				const msalInstance = await ensureInitialized();
+				if (msalInstance?.config?.auth) {
+					msalInstance.config.auth.redirectUri = window.location.origin;
+					msalInstance.config.auth.postLogoutRedirectUri = window.location.origin;
+					msalInstance.config.auth.navigateToLoginRequestUrl = false;
+				}
+				await msalInstance.handleRedirectPromise();
+			} catch (err) {
+				console.error('Error handling Microsoft auth redirect:', err);
+			} finally {
+				authReady = true;
+			}
+		}
 		getCurrentUser();
 		if (window.innerWidth <= 768) {
 			sidebarVisible.set(false);
@@ -32,28 +48,29 @@
 		});
 
 		if (browser) {
-			// --- NEW: Listen for the 'event-starting-soon' event from Rust ---
-			const unlisten = await listen('event-starting-soon', (event) => {
+			// Listen for "event-starting-soon" popup events from Rust
+			const unlistenEventSoon = await listen('event-starting-soon', (event) => {
 				console.log('Received event from Rust:', event.payload);
-				// Update the store to show the popup with the event title
 				popupStore.set({ visible: true, title: event.payload.title });
 			});
 
+			// Dark mode setup
 			const savedMode = localStorage.getItem('darkMode');
 			if (savedMode) {
 				darkMode.set(savedMode === 'true');
 			}
-
 			darkMode.subscribe((value) => {
 				localStorage.setItem('darkMode', value.toString());
 			});
 
+			// Tutorial script
 			if (!$page.url.pathname.includes('reset-password')) {
 				const script = document.createElement('script');
 				script.src = '/tutorial.js';
 				document.body.appendChild(script);
 			}
 
+			// Overlay first-time logic
 			const hasShownOverlay = localStorage.getItem('overlayShown') === 'true';
 			if (!hasShownOverlay && $page.url.pathname !== '/notepad') {
 				isLoading = true;
@@ -67,14 +84,13 @@
 				overlayShown.set(true);
 			}
 
-			// NEW: Return a cleanup function for the listener
+			// Cleanup
 			return () => {
-				unlisten();
+				unlistenEventSoon();
 			};
 		}
 	});
 
-	// Your existing reactive statements are perfect
 	$: if (
 		browser &&
 		!hasShownOverlayLocally &&
@@ -109,21 +125,23 @@
 	}
 </script>
 
-<EventPopup />
+{#if authReady}
+	<EventPopup />
 
-{#if $page.url.pathname !== '/notepad' && isLoading}
-	<LoadingScreen bind:isLoading />
-{/if}
+	{#if $page.url.pathname !== '/notepad' && isLoading}
+		<LoadingScreen bind:isLoading />
+	{/if}
 
-<div class="app">
-	<Header />
-	<div class="content">
-		{#if $user}
-			<Sidebar />
-		{/if}
-		<main>
-			<slot />
-		</main>
+	<div class="app">
+		<Header />
+		<div class="content">
+			{#if $user}
+				<Sidebar />
+			{/if}
+			<main>
+				<slot />
+			</main>
+		</div>
+		<div id="overlay" class="overlay hidden"></div>
 	</div>
-	<div id="overlay" class="overlay hidden"></div>
-</div>
+{/if}

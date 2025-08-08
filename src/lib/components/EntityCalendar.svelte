@@ -6,8 +6,10 @@
 		loginWithMicrosoft,
 		isMicrosoftLoggedIn,
 		ensureInitialized,
-		logoutFromMicrosoft // --- ADD THIS IMPORT ---
+		logoutFromMicrosoft,
+		getMsalInstance
 	} from '$lib/auth';
+	import { InteractionRequiredAuthError } from '@azure/msal-browser';
 
 	export let entityId;
 
@@ -18,7 +20,7 @@
 	let currentUser = null;
 	let isMsLoggedIn = false; // --- ADD A STATE VARIABLE ---
 
-	onMount(async () => {
+		onMount(async () => {
 		// ... your existing onMount code is fine ...
 		try {
 			console.log('Starting onMount');
@@ -35,27 +37,36 @@
 				loading = false;
 				return;
 			}
-			try {
-				const redirectResult = await msalInstance.handleRedirectPromise();
-				if (redirectResult) {
-					console.log('Successfully handled authentication redirect');
-				}
-			} catch (redirectError) {
-				console.error('Error handling authentication:', redirectError);
-				error = 'Error connecting to Microsoft account';
-				loading = false;
-				return;
-			}
 			isMsLoggedIn = isMicrosoftLoggedIn(); // --- UPDATE OUR STATE VARIABLE ---
-			const token = await getAccessToken();
-			if (!token && !isMsLoggedIn) {
-				error = 'You need to connect your Microsoft account to access calendar';
-				loading = false;
-				return;
+			let token = await getAccessToken();
+			if (!token) {
+				if (!isMsLoggedIn) {
+					error = 'You need to connect your Microsoft account to access calendar';
+					loading = false;
+					return;
+				}
+				try {
+					const instance = getMsalInstance();
+					const accounts = instance?.getAllAccounts?.() ?? [];
+					if (accounts.length > 0) {
+						const response = await instance.acquireTokenSilent({
+							scopes: ['User.Read', 'Calendars.Read'],
+							account: accounts[0]
+						});
+						token = response.accessToken;
+					}
+				} catch (e) {
+					if (e instanceof InteractionRequiredAuthError || e.errorCode === 'interaction_required') {
+						await (getMsalInstance()?.acquireTokenRedirect({ scopes: ['User.Read', 'Calendars.Read'] }));
+						return;
+					}
+					console.error('Unexpected token error:', e);
+					error = 'Failed to acquire Microsoft token';
+					loading = false;
+					return;
+				}
 			}
-			if (token || isMsLoggedIn) {
-				await loadCalendarData();
-			}
+			await loadCalendarData();
 		} catch (err) {
 			console.error('Error in onMount:', err);
 			error = err.message;
@@ -75,11 +86,25 @@
 		try {
 			console.log('Starting loadCalendarData');
 			linkedEvents = await getEntityCalendarEvents(entityId);
-			const accessToken = await getAccessToken();
+			let accessToken = await getAccessToken();
 			if (!accessToken) {
-				error = 'You need to connect your Microsoft account to access calendar';
-				loading = false;
-				return;
+				try {
+					const instance = getMsalInstance();
+					const accounts = instance?.getAllAccounts?.() ?? [];
+					if (accounts.length > 0) {
+						const response = await instance.acquireTokenSilent({
+							scopes: ['User.Read', 'Calendars.Read'],
+							account: accounts[0]
+						});
+						accessToken = response.accessToken;
+					}
+				} catch (e) {
+					if (e instanceof InteractionRequiredAuthError || e.errorCode === 'interaction_required') {
+						await (getMsalInstance()?.acquireTokenRedirect({ scopes: ['User.Read', 'Calendars.Read'] }));
+						return;
+					}
+					throw e;
+				}
 			}
 			const startDate = new Date();
 			const endDate = new Date();
