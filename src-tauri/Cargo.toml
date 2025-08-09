@@ -24,6 +24,7 @@ tauri-plugin-log = "2"
 tauri-plugin-oauth = "2.0.0"
 windows = { version = "0.60", default-features = false, features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
 url = "2" # <-- Added so we can use Url::parse()
+tauri-plugin-opener = "2"
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-single-instance = { version = "2" }
