@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::{Emitter, Manager};
+use tauri_plugin_oauth::start;
 
 #[derive(Clone, serde::Serialize)]
 struct EventPayload {
@@ -9,12 +10,17 @@ struct EventPayload {
 
 #[tauri::command]
 fn flash_taskbar(app: tauri::AppHandle, title: String) {
-    println!("[Rust] The 'flash_taskbar' command was invoked for event: {}", &title);
+    println!(
+        "[Rust] The 'flash_taskbar' command was invoked for event: {}",
+        &title
+    );
     if let Some(window) = app.get_webview_window("main") {
         #[cfg(target_os = "windows")]
         {
             use windows::Win32::Foundation::HWND;
-            use windows::Win32::UI::WindowsAndMessaging::{FLASHWINFO, FlashWindowEx, FLASHW_ALL, FLASHW_TIMERNOFG};
+            use windows::Win32::UI::WindowsAndMessaging::{
+                FlashWindowEx, FLASHWINFO, FLASHW_ALL, FLASHW_TIMERNOFG,
+            };
             if let Ok(raw_handle) = window.hwnd() {
                 unsafe {
                     let hwnd = HWND(raw_handle.0 as *mut std::ffi::c_void);
@@ -35,6 +41,14 @@ fn flash_taskbar(app: tauri::AppHandle, title: String) {
     }
 }
 
+#[tauri::command]
+async fn start_server(window: tauri::Window) -> Result<u16, String> {
+    start(move |url| {
+        let _ = window.emit("redirect_uri", url);
+    })
+    .map_err(|e| e.to_string())
+}
+
 fn main() {
     let mut builder = tauri::Builder::default();
 
@@ -50,8 +64,9 @@ fn main() {
 
     builder
         .plugin(tauri_plugin_oauth::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|_app| Ok(()))
-        .invoke_handler(tauri::generate_handler![flash_taskbar])
+        .invoke_handler(tauri::generate_handler![flash_taskbar, start_server])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

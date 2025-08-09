@@ -1,6 +1,7 @@
-import { open } from '@tauri-apps/api/shell';
+import { open } from '@tauri-apps/plugin-opener';
 import { fetch, Body } from '@tauri-apps/api/http';
-import { start, onUrl, cancel } from '@fabianlars/tauri-plugin-oauth';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { MICROSOFT_CLIENT_ID } from '$lib/env';
 
 const TENANT = 'common';
@@ -64,7 +65,7 @@ export async function login() {
 	const challenge = await sha256Base64Url(verifier);
 	savePkceState({ state, verifier });
 
-	const port = await start();
+	const port = await invoke('start_server');
 	const redirectUri = `http://localhost:${port}`;
 
 	const params = new URLSearchParams({
@@ -81,12 +82,17 @@ export async function login() {
 	const authUrl = `${AUTH_ENDPOINT}?${params.toString()}`;
 
 	const urlPromise = new Promise((resolve) => {
-		onUrl((url) => resolve(url));
+		let unlisten;
+		listen('redirect_uri', (event) => {
+			if (unlisten) unlisten();
+			resolve(event.payload);
+		}).then((fn) => {
+			unlisten = fn;
+		});
 	});
 
 	await open(authUrl);
 	const urlStr = await urlPromise;
-	await cancel();
 
 	try {
 		const u = new URL(urlStr);
